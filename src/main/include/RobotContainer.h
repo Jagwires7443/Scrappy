@@ -6,6 +6,8 @@
 
 #include <frc2/command/CommandPtr.h>
 
+#include "subsystems/ArmSubsystem.h"
+
 class RobotContainer
 {
 public:
@@ -14,5 +16,7 @@ public:
   frc2::CommandPtr GetAutonomousCommand() noexcept;
 
 private:
+  ArmSubsystem arm_;
+
   void ConfigureBindings() noexcept;
 };
