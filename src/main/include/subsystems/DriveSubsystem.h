@@ -31,6 +31,7 @@
 #include <wpi/sendable/SendableBuilder.h>
 #include <wpi/sendable/SendableHelper.h>
 
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -57,7 +58,7 @@ public:
   // Valid and unchanging, from return of TestInit() through destruction of
   // the associated DriveSubsystem().  This provides a way to inject Commands
   // into Test Mode, interactively.  If nullptr, TestInit() was never called.
-  // XXX frc::SendableChooser<frc2::CommandPtr()> *TestModeChooser() noexcept { return m_chooser.get(); }
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> *TestModeChooser() noexcept { return &m_chooser; }
 
   // Obtain status of the overall swerve drive subsystem.
   bool GetStatus() const noexcept;
@@ -229,7 +230,8 @@ private:
   double m_maxProcessSecondDerivative{0.0};
 
   // Test Mode (only) instance of test command chooser.
-  // XXX std::unique_ptr<frc::SendableChooser<frc2::CommandPtr()>> m_chooser;
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> m_chooser;
+  std::function<frc2::CommandPtr()> m_commandFactory;
   std::optional<frc2::CommandPtr> m_command;
 
   // Last commanded drive inputs, for Test Mode display.

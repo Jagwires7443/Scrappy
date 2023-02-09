@@ -16,6 +16,7 @@
 #include <frc/shuffleboard/ShuffleboardLayout.h>
 #include <frc/shuffleboard/ShuffleboardTab.h>
 #include <frc/shuffleboard/SimpleWidget.h>
+#include <frc2/command/CommandBase.h>
 #include <frc2/command/CommandScheduler.h>
 #include <networktables/NetworkTableEntry.h>
 #include <networktables/NetworkTableInstance.h>
@@ -386,8 +387,6 @@ void DriveSubsystem::TestInit() noexcept
                                                              pidf::kDriveVelocityD,
                                                              pidf::kDrivePositionF);
 
-  // XXX m_chooser = std::make_unique<frc::SendableChooser<frc2::CommandPtr()>>();
-
   frc::ShuffleboardTab &shuffleboardTab = frc::Shuffleboard::GetTab("Swerve");
 
   frc::ShuffleboardLayout &shuffleboardLayoutSwerveTurning =
@@ -507,13 +506,9 @@ void DriveSubsystem::TestInit() noexcept
                         .WithPosition(3, 1)
                         .WithWidget(frc::BuiltInWidgets::kToggleButton);
 
-#if 0 // XXX
-
-  m_commandChooser = &shuffleboardLayoutControls.Add("Command", *m_chooser)
+  m_commandChooser = &shuffleboardLayoutControls.Add("Command", m_chooser)
                           .WithPosition(2, 1)
                           .WithWidget(frc::BuiltInWidgets::kComboBoxChooser);
-
-#endif
 
   std::printf("OK.\n");
 }
@@ -747,26 +742,29 @@ void DriveSubsystem::TestPeriodic() noexcept
     return;
   }
 
-#if 0 // XXX
-
-  frc2::CommandPtr command = m_chooser->GetSelected();
+  std::function<frc2::CommandPtr()> commandFactory = m_chooser.GetSelected();
 
   // If a new command has been selected, cancel any old one and then schedule
   // the new one.
-  if (m_command != command)
+  if (m_commandFactory.target_type() != commandFactory.target_type() || m_commandFactory.target<frc2::CommandPtr()>() != commandFactory.target<frc2::CommandPtr()>())
   {
     if (m_command)
     {
       m_command->Cancel();
+      m_command.reset();
     }
-    m_command = command;
+
+    if (m_commandFactory)
+    {
+      m_command = commandFactory();
+    }
+    m_commandFactory = commandFactory;
+
     if (m_command)
     {
-      m_command->Schedule(true);
+      m_command->Schedule();
     }
   }
-
-#endif
 }
 
 void DriveSubsystem::DisabledInit() noexcept
