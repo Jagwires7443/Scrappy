@@ -7,9 +7,9 @@
 ArmSubsystem::ArmSubsystem() noexcept
 {
   shoulderSensor_ = std::make_unique<AngleSensor>(0, 0);
-  elbowSensor_ = std::make_unique<AngleSensor>(0, 0);
-  shoulderMotor_ = SparkMaxFactory::CreateSparkMax("Shoulder", 0, false);
-  elbowMotor_ = SparkMaxFactory::CreateSparkMax("Elbow", 0, false);
+  elbowSensor_ = std::make_unique<AngleSensor>(1, 0);
+  shoulderMotor_ = SparkMaxFactory::CreateSparkMax("Shoulder", 1, false);
+  elbowMotor_ = SparkMaxFactory::CreateSparkMax("Elbow", 2, false);
 }
 
 frc2::CommandPtr ArmSubsystem::ArmMethodCommand() noexcept
