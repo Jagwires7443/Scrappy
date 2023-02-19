@@ -242,7 +242,7 @@ void RobotContainer::TestInit() noexcept
 
   m_driveSubsystem.TestInit();
 
-  frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
+  // frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
 
   frc2::CommandScheduler::GetInstance().Enable();
 }
