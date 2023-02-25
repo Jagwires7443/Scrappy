@@ -131,6 +131,15 @@ namespace pidf
 
 namespace nonDrive
 {
-    constexpr int kShoulderCanID = 9;
-    constexpr int kElbowCanID = 10;
+    constexpr int kShoulderAlignmentOffset = +0;
+    constexpr int kElbowAlignmentOffset = +0;
+
+    constexpr int kShoulderMotorCanID = 9;
+    constexpr int kElbowMotorCanID = 10;
+
+    constexpr int kShoulderEncoderPort = 8;
+    constexpr int kElbowEncoderPort = 9;
+
+    constexpr bool kShoulderMotorInverted = false;
+    constexpr bool kElbowMotorInverted = false;
 }

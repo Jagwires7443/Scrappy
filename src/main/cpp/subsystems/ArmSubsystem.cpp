@@ -4,12 +4,14 @@
 
 #include "subsystems/ArmSubsystem.h"
 
+#include "Constants.h"
+
 ArmSubsystem::ArmSubsystem() noexcept
 {
-  shoulderSensor_ = std::make_unique<AngleSensor>(0, 0);
-  elbowSensor_ = std::make_unique<AngleSensor>(1, 0);
-  shoulderMotor_ = SparkMaxFactory::CreateSparkMax("Shoulder", 1, false);
-  elbowMotor_ = SparkMaxFactory::CreateSparkMax("Elbow", 2, false);
+  shoulderSensor_ = std::make_unique<AngleSensor>(nonDrive::kShoulderEncoderPort, nonDrive::kShoulderAlignmentOffset);
+  elbowSensor_ = std::make_unique<AngleSensor>(nonDrive::kElbowEncoderPort, nonDrive::kElbowAlignmentOffset);
+  shoulderMotor_ = SparkMaxFactory::CreateSparkMax("Shoulder", nonDrive::kShoulderMotorCanID, nonDrive::kShoulderMotorInverted);
+  elbowMotor_ = SparkMaxFactory::CreateSparkMax("Elbow", nonDrive::kElbowMotorCanID, nonDrive::kElbowMotorInverted);
 }
 
 frc2::CommandPtr ArmSubsystem::ArmMethodCommand() noexcept
