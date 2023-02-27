@@ -17,23 +17,18 @@ class ArmSubsystem : public frc2::SubsystemBase
 public:
   ArmSubsystem() noexcept;
 
-  /**
-   * Example command factory method.
-   */
-  frc2::CommandPtr ArmMethodCommand() noexcept;
-
-  /**
-   * An example method querying a boolean state of the subsystem (for example, a
-   * digital sensor).
-   *
-   * @return value of some boolean subsystem state, such as a digital sensor.
-   */
-  bool ArmCondition() noexcept;
-
-  /**
-   * Will be called periodically whenever the CommandScheduler runs.
-   */
   void Periodic() noexcept override;
+
+  void TestInit() noexcept;
+  void TestExit() noexcept;
+  void TestPeriodic() noexcept;
+  void DisabledInit() noexcept;
+  void DisabledExit() noexcept;
+
+  void SetShoulder(double percent) noexcept;
+  void SetElbow(double percent) noexcept;
+
+  frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
 private:
   std::unique_ptr<AngleSensor> shoulderSensor_;

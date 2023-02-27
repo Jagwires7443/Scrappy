@@ -14,20 +14,26 @@ ArmSubsystem::ArmSubsystem() noexcept
   elbowMotor_ = SparkMaxFactory::CreateSparkMax("Elbow", nonDrive::kElbowMotorCanID, nonDrive::kElbowMotorInverted);
 }
 
-frc2::CommandPtr ArmSubsystem::ArmMethodCommand() noexcept
+void ArmSubsystem::Periodic() noexcept
+{
+  shoulderSensor_->Periodic();
+  elbowSensor_->Periodic();
+  shoulderMotor_->Periodic();
+  elbowMotor_->Periodic();
+}
+
+void ArmSubsystem::TestInit() noexcept {}
+void ArmSubsystem::TestExit() noexcept {}
+void ArmSubsystem::TestPeriodic() noexcept { Periodic(); }
+void ArmSubsystem::DisabledInit() noexcept {}
+void ArmSubsystem::DisabledExit() noexcept {}
+
+void ArmSubsystem::SetShoulder(double percent) noexcept { shoulderMotor_->Set(percent); }
+void ArmSubsystem::SetElbow(double percent) noexcept { elbowMotor_->Set(percent); }
+
+frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept
 {
   // Inline construction of command goes here.
   // Subsystem::RunOnce implicitly requires `this` subsystem.
   return RunOnce([/* this */] { /* one-time action goes here */ });
-}
-
-bool ArmSubsystem::ArmCondition() noexcept
-{
-  // Query some boolean state, such as a digital sensor.
-  return false;
-}
-
-void ArmSubsystem::Periodic() noexcept
-{
-  // Implementation of subsystem periodic method goes here.
 }

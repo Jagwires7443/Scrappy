@@ -10,6 +10,7 @@
 
 #include "subsystems/ArmSubsystem.h"
 #include "subsystems/DriveSubsystem.h"
+#include "subsystems/InfrastructureSubsystem.h"
 
 #include <memory>
 #include <tuple>
@@ -56,8 +57,9 @@ private:
   uint m_LEDPatternCount{0};
 
   // The robot's subsystems and commands are defined here...
-  DriveSubsystem m_driveSubsystem;
   ArmSubsystem arm_;
+  DriveSubsystem m_driveSubsystem;
+  InfrastructureSubsystem m_infrastructureSubsystem;
 
   frc::XboxController m_xbox{0};
   frc::GenericHID m_buttonBoard{1};

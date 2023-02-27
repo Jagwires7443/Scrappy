@@ -4,6 +4,7 @@
 
 #include "Constants.h"
 #include "RobotContainer.h"
+#include "commands/TestModeCommands.h"
 
 #include <frc2/command/button/JoystickButton.h>
 #include <frc2/command/button/POVButton.h>
@@ -20,6 +21,7 @@
 RobotContainer::RobotContainer() noexcept
 {
   // Initialize all of your commands and subsystems here
+  m_LEDPatternCount = m_infrastructureSubsystem.GetLEDPatternCount();
 
   // Configure the button bindings
   ConfigureBindings();
@@ -80,6 +82,9 @@ void RobotContainer::AutonomousInit() noexcept
 
   m_driveSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                       {&m_driveSubsystem}));
+
+  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
+                                                               {&m_infrastructureSubsystem}));
 }
 
 void RobotContainer::TeleopInit() noexcept
@@ -89,10 +94,15 @@ void RobotContainer::TeleopInit() noexcept
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.SetDefaultCommand(DriveCommandFactory(this));
+
+  m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
+                                                               { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
+                                                               {&m_infrastructureSubsystem}));
 }
 
 void RobotContainer::ConfigureBindings() noexcept
 {
+#if 0
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                              { m_slow = true; },
                                                                                              {})
@@ -141,16 +151,35 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                        { m_shooterVelocity = 400.0; },
                                                                        {})
                                                       .ToPtr());
+  frc2::JoystickButton(&m_buttonBoard, 7).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                      { ++m_LEDPattern;
+                                                                      if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
+                                                                      std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
+                                                                    {})
+                                                  .ToPtr());
+#endif
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                                      { m_infrastructureSubsystem.Disable(); },
+                                                                                                      {&m_infrastructureSubsystem})
+                                                                                     .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kRightBumper).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                                       { m_infrastructureSubsystem.Enable(); },
+                                                                                                       {&m_infrastructureSubsystem})
+                                                                                      .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
 {
+#if 0
   if (m_buttonBoard.GetRawButton(9))
   {
   }
   else
   {
   }
+#endif
 
   return std::nullopt;
 }
@@ -242,7 +271,20 @@ void RobotContainer::TestInit() noexcept
 
   m_driveSubsystem.TestInit();
 
-  // frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
+  frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
+
+  chooser->SetDefaultOption("Zero", std::bind(ZeroCommand::ZeroCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Turning Max", std::bind(MaxVAndATurningCommand::MaxVAndATurningCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Drive Max", std::bind(MaxVAndADriveCommand::MaxVAndADriveCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Xs and Os", std::bind(XsAndOsCommand::XsAndOsCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("RotateModules", std::bind(RotateModulesCommand::RotateModulesCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Point", std::bind(PointCommandFactory, this));
+  chooser->AddOption("Square", std::bind(SquareCommand::SquareCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Spirograph", std::bind(SpirographCommand::SpirographCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Orbit", std::bind(OrbitCommand::OrbitCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Pirouette", std::bind(PirouetteCommand::PirouetteCommandFactory, &m_driveSubsystem));
+  chooser->AddOption("Drive", std::bind(DriveCommandFactory, this));
+  chooser->AddOption("Spin", std::bind(SpinCommand::SpinCommandFactory, &m_driveSubsystem));
 
   frc2::CommandScheduler::GetInstance().Enable();
 }
@@ -261,6 +303,33 @@ void RobotContainer::TestExit() noexcept
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
+
+  // XXX
+  if (m_xbox.GetAButton())
+  {
+    arm_.SetShoulder(0.25);
+  }
+  else if (m_xbox.GetBButton())
+  {
+    arm_.SetShoulder(1.0);
+  }
+  else
+  {
+    arm_.SetShoulder(0.0);
+  }
+
+  if (m_xbox.GetXButton())
+  {
+    arm_.SetElbow(0.25);
+  }
+  else if (m_xbox.GetYButton())
+  {
+    arm_.SetElbow(1.0);
+  }
+  else
+  {
+    arm_.SetElbow(0.0);
+  }
 }
 
 void RobotContainer::DisabledInit() noexcept

@@ -10,10 +10,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = +2064;
-    constexpr int kFrontRightAlignmentOffset = +445;
-    constexpr int kRearLeftAlignmentOffset = -16;
-    constexpr int kRearRightAlignmentOffset = -201;
+    constexpr int kFrontLeftAlignmentOffset = -1921;
+    constexpr int kFrontRightAlignmentOffset = -1675;
+    constexpr int kRearLeftAlignmentOffset = +825;
+    constexpr int kRearRightAlignmentOffset = -626;
 
     // SDS MK4i Middle (L2) Gear Ratio: 6.75:1;
     // Nominal Wheel Diameter (4"): =0.1016m;
@@ -90,10 +90,12 @@ namespace firmware
 
 namespace pidf
 {
+    // XXX These four need to be tweaked for MK4i!
     constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750.0_deg_per_s;
     constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000.0_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.006;
     constexpr double kTurningPositionF = 0.003;
+
     constexpr double kTurningPositionI = 0.0;
     constexpr double kTurningPositionIZ = 0.0;
     constexpr double kTurningPositionIM = 0.0;
@@ -140,6 +142,6 @@ namespace nonDrive
     constexpr int kShoulderEncoderPort = 8;
     constexpr int kElbowEncoderPort = 9;
 
-    constexpr bool kShoulderMotorInverted = false;
+    constexpr bool kShoulderMotorInverted = true;
     constexpr bool kElbowMotorInverted = false;
 }
