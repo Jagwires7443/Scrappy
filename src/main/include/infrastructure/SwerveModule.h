@@ -140,7 +140,8 @@ public:
       const int driveMotorCanID,
       const int turningMotorCanID,
       const int turningEncoderPort,
-      const int alignmentOffset) noexcept;
+      const int alignmentOffset,
+      const bool inverted) noexcept;
 
   // No copy/assign.
   SwerveModule(const SwerveModule &) = delete;
@@ -264,7 +265,7 @@ private:
 
   // These are set based on the mechanical and electrical construction of the
   // robot, and are never expected to change.
-  const bool m_driveMotorInverted{physical::kDriveMotorInverted};
+  const bool m_driveMotorInverted{false};
   const bool m_turningMotorInverted{physical::kTurningMotorInverted};
 
   // Used for printf-style logging.

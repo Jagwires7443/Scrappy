@@ -79,8 +79,15 @@ namespace physical
     constexpr int kRearRightTurningEncoderPort = 3;
 
     // These can flip because of gearing.
-    constexpr bool kDriveMotorInverted = false;
-    constexpr bool kTurningMotorInverted = false;
+    // Note that MK3 SDS turning is not inverted, while MK4i is (the motors are
+    // litterally inverted).  The drive motor inversion depends on how things
+    // are set up in terms of the zero position.  If the bevel gears are
+    // aligned so they face inward on both the left and right side, these are
+    // opposite.  If they are all made to face one way or the other when they
+    // are aligned, these will be the same -- but might all be inverted or not.
+    constexpr bool kRightDriveMotorInverted = true;
+    constexpr bool kLeftDriveMotorInverted = false;
+    constexpr bool kTurningMotorInverted = true;
 }
 
 namespace firmware
@@ -90,9 +97,10 @@ namespace firmware
 
 namespace pidf
 {
-    // XXX These four need to be tweaked for MK4i!
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 2750.0_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 20000.0_deg_per_s_sq;
+    // SDS MK4i Steering ratio is 150/7:1; NEO Free Speed is 5676 RPM; 264.88
+    // RPM or 1589.28 degrees per second.  For MK3, Steering ratio is 12.8:1.
+    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
+    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.006;
     constexpr double kTurningPositionF = 0.003;
 

@@ -38,7 +38,8 @@ SwerveModule::SwerveModule(
     const int driveMotorCanID,
     const int turningMotorCanID,
     const int turningEncoderPort,
-    const int alignmentOffset) noexcept : m_name{name}
+    const int alignmentOffset,
+    const bool inverted) noexcept : m_name{name}, m_driveMotorInverted{inverted}
 {
     // Set up onboard printf-style logging.
     std::string logName{"/SwerveModule/"};

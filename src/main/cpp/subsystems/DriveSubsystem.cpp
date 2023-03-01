@@ -92,28 +92,32 @@ DriveSubsystem::DriveSubsystem() noexcept
       physical::kFrontLeftDriveMotorCanID,
       physical::kFrontLeftTurningMotorCanID,
       physical::kFrontLeftTurningEncoderPort,
-      physical::kFrontLeftAlignmentOffset);
+      physical::kFrontLeftAlignmentOffset,
+      physical::kLeftDriveMotorInverted);
 
   m_frontRightSwerveModule = std::make_unique<SwerveModule>(
       "Front Right",
       physical::kFrontRightDriveMotorCanID,
       physical::kFrontRightTurningMotorCanID,
       physical::kFrontRightTurningEncoderPort,
-      physical::kFrontRightAlignmentOffset);
+      physical::kFrontRightAlignmentOffset,
+      physical::kRightDriveMotorInverted);
 
   m_rearLeftSwerveModule = std::make_unique<SwerveModule>(
       "Rear Left",
       physical::kRearLeftDriveMotorCanID,
       physical::kRearLeftTurningMotorCanID,
       physical::kRearLeftTurningEncoderPort,
-      physical::kRearLeftAlignmentOffset);
+      physical::kRearLeftAlignmentOffset,
+      physical::kLeftDriveMotorInverted);
 
   m_rearRightSwerveModule = std::make_unique<SwerveModule>(
       "Rear Right",
       physical::kRearRightDriveMotorCanID,
       physical::kRearRightTurningMotorCanID,
       physical::kRearRightTurningEncoderPort,
-      physical::kRearRightAlignmentOffset);
+      physical::kRearRightAlignmentOffset,
+      physical::kRightDriveMotorInverted);
 
   // Initial position (third parameter) defaulted to "frc::Pose2d()"; initial
   // angle (second parameter) is automatically zeroed by navX initialization.
