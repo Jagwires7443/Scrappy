@@ -168,6 +168,42 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                                                        { m_infrastructureSubsystem.Enable(); },
                                                                                                        {&m_infrastructureSubsystem})
                                                                                       .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetShoulder(+0.25); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                              { arm_.SetShoulder(0.0); },
+                                                                                              {&arm_})
+                                                                             .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetShoulder(-0.25); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                              { arm_.SetShoulder(0.0); },
+                                                                                              {&arm_})
+                                                                             .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetElbow(+0.25); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                              { arm_.SetElbow(0.0); },
+                                                                                              {&arm_})
+                                                                             .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetElbow(-0.25); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                              { arm_.SetElbow(0.0); },
+                                                                                              {&arm_})
+                                                                             .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
@@ -306,33 +342,6 @@ void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
   arm_.TestPeriodic();
-
-  // XXX
-  if (m_xbox.GetAButton())
-  {
-    arm_.SetShoulder(0.25);
-  }
-  else if (m_xbox.GetBButton())
-  {
-    arm_.SetShoulder(1.0);
-  }
-  else
-  {
-    arm_.SetShoulder(0.0);
-  }
-
-  if (m_xbox.GetXButton())
-  {
-    arm_.SetElbow(0.25);
-  }
-  else if (m_xbox.GetYButton())
-  {
-    arm_.SetElbow(1.0);
-  }
-  else
-  {
-    arm_.SetElbow(0.0);
-  }
 }
 
 void RobotContainer::DisabledInit() noexcept

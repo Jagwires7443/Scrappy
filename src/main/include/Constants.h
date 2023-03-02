@@ -147,8 +147,8 @@ namespace nonDrive
     constexpr int kShoulderMotorCanID = 9;
     constexpr int kElbowMotorCanID = 10;
 
-    constexpr int kShoulderEncoderPort = 8;
-    constexpr int kElbowEncoderPort = 9;
+    constexpr int kShoulderEncoderPort = 4;
+    constexpr int kElbowEncoderPort = 5;
 
     constexpr bool kShoulderMotorInverted = true;
     constexpr bool kElbowMotorInverted = false;

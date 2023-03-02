@@ -27,8 +27,8 @@ public:
   void DisabledInit() noexcept;
   void DisabledExit() noexcept;
 
-  void SetShoulder(double percent) noexcept; // XXX
-  void SetElbow(double percent) noexcept;    // XXX
+  void SetShoulder(double percent) noexcept { shoulderControlUI_ = percent; } // XXX
+  void SetElbow(double percent) noexcept { elbowControlUI_ = percent; }       // XXX
 
   frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
