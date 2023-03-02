@@ -152,4 +152,9 @@ namespace nonDrive
 
     constexpr bool kShoulderMotorInverted = true;
     constexpr bool kElbowMotorInverted = false;
+
+    constexpr int kGripPneuOpen = 0;
+    constexpr int kGripPneuClose = 1;
+
+    constexpr int kGripMotorCanID = 1;
 }

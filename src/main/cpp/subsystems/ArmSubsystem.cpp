@@ -11,6 +11,7 @@
 #include <frc/shuffleboard/ShuffleboardTab.h>
 
 #include <units/angle.h>
+#include <units/voltage.h>
 
 ArmSubsystem::ArmSubsystem() noexcept
 {
@@ -20,6 +21,9 @@ ArmSubsystem::ArmSubsystem() noexcept
     shoulderMotor_ = std::make_unique<SmartMotor<units::angle::degrees>>(*shoulderMotorBase_);
     elbowMotorBase_ = SparkMaxFactory::CreateSparkMax("Elbow", nonDrive::kElbowMotorCanID, nonDrive::kElbowMotorInverted);
     elbowMotor_ = std::make_unique<SmartMotor<units::angle::degrees>>(*elbowMotorBase_);
+
+    pneuGrip_ = std::make_unique<frc::DoubleSolenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kGripPneuOpen, nonDrive::kGripPneuClose);
+    motorGrip_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kGripMotorCanID);
 
     // XXX Need real constants here!!!
     shoulderPIDController_ = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
@@ -204,4 +208,16 @@ frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept
     // Inline construction of command goes here.
     // Subsystem::RunOnce implicitly requires `this` subsystem.
     return RunOnce([/* this */] { /* one-time action goes here */ });
+}
+
+void ArmSubsystem::OpenGrip() noexcept
+{
+    pneuGrip_->Set(frc::DoubleSolenoid::kForward);
+    motorGrip_->SetVoltage(+0.25 * 12.0_V);
+}
+
+void ArmSubsystem::CloseGrip() noexcept
+{
+    pneuGrip_->Set(frc::DoubleSolenoid::kReverse);
+    motorGrip_->SetVoltage(-0.25 * 12.0_V);
 }

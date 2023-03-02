@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h>
 #include <frc/controller/ProfiledPIDController.h>
+#include <frc/DoubleSolenoid.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 
@@ -30,6 +32,9 @@ public:
   void SetShoulder(double percent) noexcept { shoulderControlUI_ = percent; } // XXX
   void SetElbow(double percent) noexcept { elbowControlUI_ = percent; }       // XXX
 
+  void OpenGrip() noexcept;
+  void CloseGrip() noexcept;
+
   frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
 private:
@@ -39,6 +44,8 @@ private:
   std::unique_ptr<SmartMotorBase> elbowMotorBase_;
   std::unique_ptr<SmartMotor<units::angle::degrees>> shoulderMotor_;
   std::unique_ptr<SmartMotor<units::angle::degrees>> elbowMotor_;
+  std::unique_ptr<frc::DoubleSolenoid> pneuGrip_;
+  std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> motorGrip_;
 
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> shoulderPIDController_;
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> elbowPIDController_;
