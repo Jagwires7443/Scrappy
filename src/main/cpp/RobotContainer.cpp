@@ -270,6 +270,7 @@ void RobotContainer::TestInit() noexcept
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestInit();
+  arm_.TestInit();
 
   frc::SendableChooser<std::function<frc2::CommandPtr()>> *chooser{m_driveSubsystem.TestModeChooser()};
 
@@ -298,11 +299,13 @@ void RobotContainer::TestExit() noexcept
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.TestExit();
+  arm_.TestExit();
 }
 
 void RobotContainer::TestPeriodic() noexcept
 {
   m_driveSubsystem.TestPeriodic();
+  arm_.TestPeriodic();
 
   // XXX
   if (m_xbox.GetAButton())
@@ -344,6 +347,7 @@ void RobotContainer::DisabledInit() noexcept
   frc2::CommandScheduler::GetInstance().Enable();
 
   m_driveSubsystem.DisabledInit();
+  arm_.DisabledInit();
 }
 
 void RobotContainer::DisabledExit() noexcept
@@ -353,4 +357,5 @@ void RobotContainer::DisabledExit() noexcept
   m_driveSubsystem.ResetEncoders();
 
   m_driveSubsystem.DisabledExit();
+  arm_.DisabledExit();
 }
