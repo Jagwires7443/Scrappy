@@ -156,5 +156,5 @@ namespace nonDrive
     constexpr int kGripPneuOpen = 0;
     constexpr int kGripPneuClose = 1;
 
-    constexpr int kGripMotorCanID = 1;
+    constexpr int kGripMotorCanID = 2;
 }
