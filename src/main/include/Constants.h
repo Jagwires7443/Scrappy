@@ -1,9 +1,11 @@
 #pragma once
 
+#include <units/acceleration.h>
 #include <units/angle.h>
 #include <units/angular_acceleration.h>
 #include <units/angular_velocity.h>
 #include <units/length.h>
+#include <units/mass.h>
 #include <units/velocity.h>
 
 namespace physical
@@ -23,13 +25,13 @@ namespace physical
     // This should be empirically determined!  This is just an initial guess.
     // This is used for both distance and velocity control.  If this is off, it
     // will throw off kMaxDriveSpeed and kMaxTurnRate, as well as drive values.
-    constexpr units::meter_t kDriveMetersPerRotation = 1.0_m / 21.15;
+    constexpr units::length::meter_t kDriveMetersPerRotation = 1.0_m / 21.15;
 
     // SDS MK4i Middle (L2) Max Free Speed: 14.5 feet/second;
     // This is an upper bound, for various reasons.  It needs to be empirically
     // measured.  Half of theoretical free speed is a reasonable starting value
     // (since something in the ballpark is needed here in order to to drive).
-    constexpr units::meters_per_second_t kMaxDriveSpeed = 14.5_fps / 1.25;
+    constexpr units::velocity::meters_per_second_t kMaxDriveSpeed = 14.5_fps / 1.25;
 
     // For a square drive base, with +/-11.875" x/y coordinates for each of
     // four swerve modules, the radius of the circle going through the turn
@@ -40,7 +42,7 @@ namespace physical
     // This is used for rotating the robot in place, about it's center.  This
     // may need to be empirically adjusted, but check kDriveMetersPerRotation
     // before making any adjustment here.
-    constexpr units::meter_t kDriveMetersPerTurningCircle = 105.518_in;
+    constexpr units::length::meter_t kDriveMetersPerTurningCircle = 105.518_in;
 
     // This is the maximum rotational speed -- not of a swerve module, but of
     // the entire robot.  This is a function of the maximum drive speed and the
@@ -55,13 +57,13 @@ namespace physical
     // So the maximum rotational velocity (spinning in place) is kMaxDriveSpeed
     // / kDriveMetersPerTurningCircle * 360 degrees.  This should not need to
     // be empirically adjusted (but check).
-    constexpr units::degrees_per_second_t kMaxTurnRate =
+    constexpr units::angular_velocity::degrees_per_second_t kMaxTurnRate =
         kMaxDriveSpeed / kDriveMetersPerTurningCircle * 360.0_deg;
 
     // Drivebase geometry: distance between centers of right and left wheels on
     // robot; distance between centers of front and back wheels on robot.
-    constexpr units::meter_t kTrackWidth = 23.75_in;
-    constexpr units::meter_t kWheelBase = 23.75_in;
+    constexpr units::length::meter_t kTrackWidth = 23.75_in;
+    constexpr units::length::meter_t kWheelBase = 23.75_in;
 
     // CAN ID and Digital I/O Port assignments.
     constexpr int kFrontLeftDriveMotorCanID = 1;
@@ -99,8 +101,8 @@ namespace pidf
 {
     // SDS MK4i Steering ratio is 150/7:1; NEO Free Speed is 5676 RPM; 264.88
     // RPM or 1589.28 degrees per second.  For MK3, Steering ratio is 12.8:1.
-    constexpr units::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
+    constexpr units::angular_velocity::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
+    constexpr units::angular_acceleration::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
     constexpr double kTurningPositionP = 0.006;
     constexpr double kTurningPositionF = 0.003;
 
@@ -131,8 +133,8 @@ namespace pidf
     constexpr double kDriveVelocityD = 0.0;
     constexpr double kDriveVelocityDF = 0.0;
 
-    constexpr units::degrees_per_second_t kDriveThetaMaxVelocity = 45.0_deg_per_s;
-    constexpr units::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450.0_deg_per_s_sq;
+    constexpr units::angular_velocity::degrees_per_second_t kDriveThetaMaxVelocity = 45.0_deg_per_s;
+    constexpr units::angular_acceleration::degrees_per_second_squared_t kDriveThetaMaxAcceleration = 450.0_deg_per_s_sq;
     constexpr double kDriveThetaP = 0.10;
     constexpr double kDriveThetaF = 0.005;
     constexpr double kDriveThetaI = 0.0;
@@ -142,14 +144,15 @@ namespace pidf
 namespace nonDrive
 {
     constexpr int kShoulderAlignmentOffset = +0;
-    constexpr int kElbowAlignmentOffset = +0;
+    constexpr int kElbowAlignmentOffset = +1024;
 
     constexpr int kShoulderMotorCanID = 9;
     constexpr int kElbowMotorCanID = 10;
 
-    constexpr int kShoulderEncoderPort = 4;
-    constexpr int kElbowEncoderPort = 5;
+    constexpr int kShoulderEncoderPort = 5;
+    constexpr int kElbowEncoderPort = 4;
 
+    // These are set so the motor directions match those of the corresponding sensor.
     constexpr bool kShoulderMotorInverted = true;
     constexpr bool kElbowMotorInverted = false;
 
@@ -157,4 +160,34 @@ namespace nonDrive
     constexpr int kGripPneuClose = 1;
 
     constexpr int kGripMotorCanID = 2;
+}
+
+namespace arm
+{
+    // Acceleration of gravity (average @Earth's surface)
+    constexpr units::acceleration::meters_per_second_squared_t gravity = 1.0_SG;
+
+    constexpr units::length::meter_t upperArmLength = 30.0_in;
+    constexpr units::length::meter_t lowerArmLength = 28.0_in;
+    constexpr units::mass::kilogram_t armMass = 12.0_lb;
+
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = +63.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveStopLimit = +119.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeParkLimit = +58.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveParkLimit = +124.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeSlowLimit = +53.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveSlowLimit = +129.0_deg;
+
+    constexpr double shoulderParkPower = 0.15;
+    constexpr double shoulderSlowPower = 0.25;
+
+    constexpr units::angle::degree_t elbowNegativeStopLimit = +160.0_deg;
+    constexpr units::angle::degree_t elbowPositiveStopLimit = -160.0_deg;
+    constexpr units::angle::degree_t elbowNegativeParkLimit = +155.0_deg;
+    constexpr units::angle::degree_t elbowPositiveParkLimit = -155.0_deg;
+    constexpr units::angle::degree_t elbowNegativeSlowLimit = +150.0_deg;
+    constexpr units::angle::degree_t elbowPositiveSlowLimit = -150.0_deg;
+
+    constexpr double elbowParkPower = 0.15;
+    constexpr double elbowSlowPower = 0.25;
 }

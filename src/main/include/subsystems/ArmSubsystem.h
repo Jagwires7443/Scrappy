@@ -14,6 +14,9 @@
 #include "infrastructure/ShuffleboardWidgets.h"
 #include "infrastructure/SparkMax.h"
 
+#include <units/angle.h>
+#include <units/length.h>
+
 #include <memory>
 
 class ArmSubsystem : public frc2::SubsystemBase
@@ -63,4 +66,10 @@ private:
 
   frc::ComplexWidget *shoulderPIDUI_{nullptr};
   frc::ComplexWidget *elbowPIDUI_{nullptr};
+
+  units::angle::degree_t shoulderAngle_{0.0_deg};
+  units::angle::degree_t elbowAngle_{0.0_deg};
+
+  units::length::meter_t dottedLength_{0.0_m};
+  units::angle::degree_t dottedAngle_{0.0_deg};
 };
