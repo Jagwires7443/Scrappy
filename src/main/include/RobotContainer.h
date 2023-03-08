@@ -53,8 +53,8 @@ private:
   bool m_lock{false};
   bool m_slow{false};
   double m_shooterVelocity{0.0};
-  uint m_LEDPattern{29};
-  uint m_LEDPatternCount{0};
+  uint32_t m_LEDPattern{29};
+  uint32_t m_LEDPatternCount{0};
 
   // The robot's subsystems and commands are defined here...
   ArmSubsystem arm_;

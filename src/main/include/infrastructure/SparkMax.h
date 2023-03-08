@@ -385,36 +385,36 @@ namespace SparkMaxFactory
     // In particular, std::map is sorted, so the order here is meaningless.
     // The way forward (better readability/maintainability) is a constexpr map.
     const SmartMotorBase::ConfigMap configDefaults = {
-        {"kStatus0", uint{10}}, // ms
-        {"kStatus1", uint{20}}, // ms
-        {"kStatus2", uint{50}}, // ms
-        {"Firmware Version", uint{0x01050002}},
-        {"kIdleMode", uint{1}},
-        {"kLimitSwitchFwdPolarity", uint{0}},
-        {"kLimitSwitchRevPolarity", uint{0}},
+        {"kStatus0", uint32_t{10}}, // ms
+        {"kStatus1", uint32_t{20}}, // ms
+        {"kStatus2", uint32_t{50}}, // ms
+        {"Firmware Version", uint32_t{0x01050002}},
+        {"kIdleMode", uint32_t{1}},
+        {"kLimitSwitchFwdPolarity", uint32_t{0}},
+        {"kLimitSwitchRevPolarity", uint32_t{0}},
         {"kHardLimitFwdEn", bool{true}},
         {"kHardLimitRevEn", bool{true}},
-        {"kFollowerID", uint{0}},
-        {"kFollowerConfig", uint{0}},
+        {"kFollowerID", uint32_t{0}},
+        {"kFollowerConfig", uint32_t{0}},
         {"kSoftLimitFwd", double{0.0}},
         {"kSoftLimitRev", double{0.0}},
         {"kRampRate", double{0.0}},
         {"kClosedLoopRampRate", double{0.0}},
         {"kCompensatedNominalVoltage", double{0.0}},
         {"kAltEncoderInverted", bool{false}},
-        {"kEncoderAverageDepth", uint{64}},
-        {"kAltEncoderAverageDepth", uint{64}},
-        {"kEncoderSampleDelta", uint{100}}, // Actual default differs from doc.
-        {"kAltEncoderSampleDelta", uint{100}},
+        {"kEncoderAverageDepth", uint32_t{64}},
+        {"kAltEncoderAverageDepth", uint32_t{64}},
+        {"kEncoderSampleDelta", uint32_t{100}}, // Actual default differs from doc.
+        {"kAltEncoderSampleDelta", uint32_t{100}},
         {"kPositionConversionFactor", double{1.0}},
         {"kAltEncoderPositionFactor", double{1.0}},
         {"kVelocityConversionFactor", double{1.0}},
         {"kAltEncoderVelocityFactor", double{1.0}},
         {"kCurrentChop", double{115.0}}, // Amps
-        {"kCurrentChopCycles", uint{0}},
-        {"kSmartCurrentStallLimit", uint{80}}, // Amps
-        {"kSmartCurrentFreeLimit", uint{20}},  // Amps
-        {"kSmartCurrentConfig", uint{10000}},  // RPM
+        {"kCurrentChopCycles", uint32_t{0}},
+        {"kSmartCurrentStallLimit", uint32_t{80}}, // Amps
+        {"kSmartCurrentFreeLimit", uint32_t{20}},  // Amps
+        {"kSmartCurrentConfig", uint32_t{10000}},  // RPM
         {"kP_0", double{0.0}},
         {"kI_0", double{0.0}},
         {"kD_0", double{0.0}},
@@ -428,7 +428,7 @@ namespace SparkMaxFactory
         {"kSmartMotionMaxAccel_0", double{0.0}},
         {"kSmartMotionMinVelOutput_0", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_0", double{0.0}},
-        {"kSmartMotionAccelStrategy_0", uint{0}}, // Doc says this is double.
+        {"kSmartMotionAccelStrategy_0", uint32_t{0}}, // Doc says this is double.
         {"kP_1", double{0.0}},
         {"kI_1", double{0.0}},
         {"kD_1", double{0.0}},
@@ -442,6 +442,6 @@ namespace SparkMaxFactory
         {"kSmartMotionMaxAccel_1", double{0.0}},
         {"kSmartMotionMinVelOutput_1", double{0.0}},
         {"kSmartMotionAllowedClosedLoopError_1", double{0.0}},
-        {"kSmartMotionAccelStrategy_1", uint{0}},
+        {"kSmartMotionAccelStrategy_1", uint32_t{0}},
     };
 }

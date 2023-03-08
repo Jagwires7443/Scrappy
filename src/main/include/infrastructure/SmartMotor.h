@@ -70,7 +70,7 @@ public:
                                     std::function<void(double)> control = nullptr,
                                     std::function<void()> reset = nullptr) noexcept = 0;
 
-    using ConfigValue = std::variant<bool, uint, double>;
+    using ConfigValue = std::variant<bool, uint32_t, double>;
     using ConfigMap = std::map<std::string, ConfigValue>;
 
     virtual void SetConfig(const ConfigMap config) noexcept = 0;

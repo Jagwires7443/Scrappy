@@ -6,6 +6,7 @@
 #include <units/angular_velocity.h>
 #include <units/length.h>
 #include <units/mass.h>
+#include <units/torque.h>
 #include <units/velocity.h>
 
 namespace physical
@@ -167,18 +168,35 @@ namespace arm
     // Acceleration of gravity (average @Earth's surface)
     constexpr units::acceleration::meters_per_second_squared_t gravity = 1.0_SG;
 
+    constexpr units::angular_velocity::degrees_per_second_t kShoulderPositionMaxVelocity = 90.0_deg_per_s;
+    constexpr units::angular_acceleration::degrees_per_second_squared_t kShoulderPositionMaxAcceleration = 900.0_deg_per_s_sq;
+    constexpr double kShoulderPositionP = 0.006;
+
+    constexpr units::angular_velocity::degrees_per_second_t kElbowPositionMaxVelocity = 90.0_deg_per_s;
+    constexpr units::angular_acceleration::degrees_per_second_squared_t kElbowPositionMaxAcceleration = 900.0_deg_per_s_sq;
+    constexpr double kElbowPositionP = 0.006;
+
+    // Fixed voltage required to overcome static friction to get things moving.
+    constexpr double shoulderStaticFeedforward = 0.005;
+    constexpr double elbowStaticFeedforward = 0.005;
+
+    // Proportionalities for voltages to counter gravity at different joints.
+    // NEO empirical stall torque at 12V is 2.6Nm; gearbox is 256:1.
+    constexpr units::torque::newton_meter_t shoulderMaxTorque = 256.0 * 2.6_Nm;
+    constexpr units::torque::newton_meter_t elbowMaxTorque = 256.0 * 2.6_Nm;
+
     constexpr units::length::meter_t upperArmLength = 30.0_in;
     constexpr units::length::meter_t lowerArmLength = 28.0_in;
-    constexpr units::mass::kilogram_t armMass = 12.0_lb;
+    constexpr units::mass::kilogram_t pointMass = 12.0_lb;
 
-    constexpr units::angle::degree_t shoulderNegativeStopLimit = +63.0_deg;
-    constexpr units::angle::degree_t shoulderPositiveStopLimit = +119.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = +60.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveStopLimit = +117.0_deg;
     constexpr units::angle::degree_t shoulderNegativeParkLimit = +58.0_deg;
     constexpr units::angle::degree_t shoulderPositiveParkLimit = +124.0_deg;
     constexpr units::angle::degree_t shoulderNegativeSlowLimit = +53.0_deg;
     constexpr units::angle::degree_t shoulderPositiveSlowLimit = +129.0_deg;
 
-    constexpr double shoulderParkPower = 0.15;
+    constexpr double shoulderParkPower = 0.10;
     constexpr double shoulderSlowPower = 0.25;
 
     constexpr units::angle::degree_t elbowNegativeStopLimit = +160.0_deg;
@@ -188,6 +206,6 @@ namespace arm
     constexpr units::angle::degree_t elbowNegativeSlowLimit = +150.0_deg;
     constexpr units::angle::degree_t elbowPositiveSlowLimit = -150.0_deg;
 
-    constexpr double elbowParkPower = 0.15;
+    constexpr double elbowParkPower = 0.10;
     constexpr double elbowSlowPower = 0.25;
 }

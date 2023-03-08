@@ -32,11 +32,41 @@ public:
   void DisabledInit() noexcept;
   void DisabledExit() noexcept;
 
-  void SetShoulder(double percent) noexcept { shoulderControlUI_ = percent; } // XXX
-  void SetElbow(double percent) noexcept { elbowControlUI_ = percent; }       // XXX
+  units::angle::degree_t GetShoulderAngle() noexcept
+  {
+    return shoulderAngle_;
+  }
+
+  units::angle::degree_t GetElbowAngle() noexcept
+  {
+    return elbowAngle_;
+  }
+
+#ifdef RUNNING_FRC_TESTS
+  units::length::meter_t TestGetDottedLength() noexcept
+  {
+    return dottedLength_;
+  }
+
+  units::angle::degree_t TestGetDottedAngle() noexcept
+  {
+    return dottedAngle_;
+  }
+#endif
+
+  void SetShoulder(double percent) noexcept
+  {
+    shoulderControlUI_ = percent;
+  } // XXX
+
+  void SetElbow(double percent) noexcept
+  {
+    elbowControlUI_ = percent;
+  } // XXX
 
   void OpenGrip() noexcept;
   void CloseGrip() noexcept;
+  void RelaxGrip() noexcept;
 
   frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
@@ -72,4 +102,6 @@ private:
 
   units::length::meter_t dottedLength_{0.0_m};
   units::angle::degree_t dottedAngle_{0.0_deg};
+
+  uint32_t iteration_{0};
 };

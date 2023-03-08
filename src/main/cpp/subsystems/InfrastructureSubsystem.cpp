@@ -137,12 +137,12 @@ const std::vector<std::pair<double, std::string_view>> LEDPatterns = {
     {+0.99, "Solid Colors: Black [- - Brightness]"},
 };
 
-uint InfrastructureSubsystem::GetLEDPatternCount() noexcept
+uint32_t InfrastructureSubsystem::GetLEDPatternCount() noexcept
 {
     return LEDPatterns.size();
 }
 
-std::string_view InfrastructureSubsystem::GetLEDPatternDescription(uint pattern) noexcept
+std::string_view InfrastructureSubsystem::GetLEDPatternDescription(uint32_t pattern) noexcept
 {
     if (pattern >= LEDPatterns.size())
     {
@@ -152,7 +152,7 @@ std::string_view InfrastructureSubsystem::GetLEDPatternDescription(uint pattern)
     return LEDPatterns[pattern].second;
 }
 
-void InfrastructureSubsystem::SetLEDPattern(uint pattern) noexcept
+void InfrastructureSubsystem::SetLEDPattern(uint32_t pattern) noexcept
 {
     if (pattern >= LEDPatterns.size())
     {

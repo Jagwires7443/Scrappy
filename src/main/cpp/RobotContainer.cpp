@@ -209,10 +209,18 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                                                 { arm_.OpenGrip(); },
                                                                                                 {&arm_})
                                                                                .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                                 { arm_.RelaxGrip(); },
+                                                                                                 {&arm_})
+                                                                                .ToPtr());
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                                  { arm_.CloseGrip(); },
                                                                                                  {&arm_})
                                                                                 .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).OnFalse(frc2::InstantCommand([&]() -> void
+                                                                                                  { arm_.RelaxGrip(); },
+                                                                                                  {&arm_})
+                                                                                 .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept

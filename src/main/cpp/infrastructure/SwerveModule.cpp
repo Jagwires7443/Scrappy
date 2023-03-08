@@ -79,8 +79,8 @@ SwerveModule::SwerveModule(
 
     // Motor is in turns and turns/minute (RPM), do degrees and degrees/second.
     m_turningMotor->AddConfig(SmartMotorBase::ConfigMap{
-        {"kStatus1", uint{250}}, // ms
-        {"kStatus2", uint{250}}, // ms
+        {"kStatus1", uint32_t{250}}, // ms
+        {"kStatus2", uint32_t{250}}, // ms
         {"kPositionConversionFactor", double{360.0}},
         {"kVelocityConversionFactor", double{360.0 / 60.0}},
     });
@@ -88,8 +88,8 @@ SwerveModule::SwerveModule(
 
     // Motor is in turns and turns/minute (RPM), do meters and meters/second.
     m_driveMotor->AddConfig(SmartMotorBase::ConfigMap{
-        {"kStatus1", uint{250}}, // ms
-        {"kStatus2", uint{250}}, // ms
+        {"kStatus1", uint32_t{250}}, // ms
+        {"kStatus2", uint32_t{250}}, // ms
         {"kPositionConversionFactor", double{physical::kDriveMetersPerRotation}},
         {"kVelocityConversionFactor", double{physical::kDriveMetersPerRotation / 60.0}},
     });
@@ -821,7 +821,7 @@ void SwerveModule::SetTurningPositionPID() noexcept
         {"kDFilter_0", double{m_turningPosition_DF}},
         {"kSmartMotionMaxVelocity_0", double{m_turningPosition_V}},
         {"kSmartMotionMaxAccel_0", double{m_turningPosition_A}},
-        {"kSmartMotionAccelStrategy_0", uint{0}},
+        {"kSmartMotionAccelStrategy_0", uint32_t{0}},
     });
 
     m_turningMotor->ApplyConfig(false);
@@ -839,7 +839,7 @@ void SwerveModule::SetDrivePositionPID() noexcept
         {"kDFilter_0", double{m_drivePosition_DF}},
         {"kSmartMotionMaxVelocity_0", double{m_drivePosition_V}},
         {"kSmartMotionMaxAccel_0", double{m_drivePosition_A}},
-        {"kSmartMotionAccelStrategy_0", uint{0}},
+        {"kSmartMotionAccelStrategy_0", uint32_t{0}},
     });
 
     m_driveMotor->ApplyConfig(false);
@@ -857,7 +857,7 @@ void SwerveModule::SetDriveVelocityPID() noexcept
         {"kDFilter_1", double{m_driveVelocity_DF}},
         {"kSmartMotionMaxVelocity_1", double{m_driveVelocity_V}},
         {"kSmartMotionMaxAccel_1", double{m_driveVelocity_A}},
-        {"kSmartMotionAccelStrategy_1", uint{1}},
+        {"kSmartMotionAccelStrategy_1", uint32_t{1}},
     });
 
     m_driveMotor->ApplyConfig(false);
@@ -866,13 +866,13 @@ void SwerveModule::SetDriveVelocityPID() noexcept
 void SwerveModule::SetStatusFramePeriods(GraphSelection graphSelection) noexcept
 {
     const SmartMotorBase::ConfigMap slow{
-        {"kStatus1", uint{250}}, // ms
-        {"kStatus2", uint{250}}, // ms
+        {"kStatus1", uint32_t{250}}, // ms
+        {"kStatus2", uint32_t{250}}, // ms
     };
 
     const SmartMotorBase::ConfigMap fast{
-        {"kStatus1", uint{10}}, // ms
-        {"kStatus2", uint{10}}, // ms
+        {"kStatus1", uint32_t{10}}, // ms
+        {"kStatus2", uint32_t{10}}, // ms
     };
 
     switch (m_graphSelection)

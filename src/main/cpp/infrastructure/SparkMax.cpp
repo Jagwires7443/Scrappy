@@ -171,18 +171,18 @@ namespace
         double outputRangeMax0_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_0"));
         double outputRangeMin1_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMin_1"));
         double outputRangeMax1_ = std::get<double>(SparkMaxFactory::configDefaults.at("kOutputMax_1"));
-        uint followerID_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kFollowerID"));
-        uint followerConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kFollowerConfig"));
+        uint32_t followerID_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kFollowerID"));
+        uint32_t followerConfig_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kFollowerConfig"));
         double currentChop_ = std::get<double>(SparkMaxFactory::configDefaults.at("kCurrentChop"));
-        uint currentChopCycles_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kCurrentChopCycles"));
-        uint smartCurrentStallLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentStallLimit"));
-        uint smartCurrentFreeLimit_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentFreeLimit"));
-        uint smartCurrentConfig_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
+        uint32_t currentChopCycles_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kCurrentChopCycles"));
+        uint32_t smartCurrentStallLimit_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kSmartCurrentStallLimit"));
+        uint32_t smartCurrentFreeLimit_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kSmartCurrentFreeLimit"));
+        uint32_t smartCurrentConfig_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kSmartCurrentConfig"));
 
         // Config parameters which are needed before SetConfig()/AddConfig().
-        uint status0_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus0"));
-        uint status1_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus1"));
-        uint status2_ = std::get<uint>(SparkMaxFactory::configDefaults.at("kStatus2"));
+        uint32_t status0_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kStatus0"));
+        uint32_t status1_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kStatus1"));
+        uint32_t status2_ = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kStatus2"));
 
         // The next two data members are used to implement pacing of the config
         // state machines.
@@ -192,7 +192,7 @@ namespace
         // The inner state config machine uses motor_, encoder_, controller_,
         // forward_, reverse_, configReboot_, and sequence_ to track state.
         bool configReboot_{true};
-        uint sequence_{0};
+        uint32_t sequence_{0};
 
         // Cumulative faults (since last explicit clear).
         std::bitset<16> faultBits_;
@@ -212,29 +212,29 @@ namespace
         double velocity_{0.0};
 
         // Counters for all types of error (since last explicit clear).
-        uint resets_{0};
-        uint throws_{0};
-        uint catches_{0};
-        uint kError_{0};
-        uint kTimeout_{0};
-        uint kNotImplemented_{0};
-        uint kHALError_{0};
-        uint kCantFindFirmware_{0};
-        uint kFirmwareTooOld_{0};
-        uint kFirmwareTooNew_{0};
-        uint kParamInvalidID_{0};
-        uint kParamMismatchType_{0};
-        uint kParamAccessMode_{0};
-        uint kParamInvalid_{0};
-        uint kParamNotImplementedDeprecated_{0};
-        uint kFollowConfigMismatch_{0};
-        uint kInvalid_{0};
-        uint kSetpointOutOfRange_{0};
-        uint kUnknown_{0};
-        uint kCANDisconnected_{0};
-        uint kDuplicateCANId_{0};
-        uint kInvalidCANId_{0};
-        uint kSparkMaxDataPortAlreadyConfiguredDifferently_{0};
+        uint32_t resets_{0};
+        uint32_t throws_{0};
+        uint32_t catches_{0};
+        uint32_t kError_{0};
+        uint32_t kTimeout_{0};
+        uint32_t kNotImplemented_{0};
+        uint32_t kHALError_{0};
+        uint32_t kCantFindFirmware_{0};
+        uint32_t kFirmwareTooOld_{0};
+        uint32_t kFirmwareTooNew_{0};
+        uint32_t kParamInvalidID_{0};
+        uint32_t kParamMismatchType_{0};
+        uint32_t kParamAccessMode_{0};
+        uint32_t kParamInvalid_{0};
+        uint32_t kParamNotImplementedDeprecated_{0};
+        uint32_t kFollowConfigMismatch_{0};
+        uint32_t kInvalid_{0};
+        uint32_t kSetpointOutOfRange_{0};
+        uint32_t kUnknown_{0};
+        uint32_t kCANDisconnected_{0};
+        uint32_t kDuplicateCANId_{0};
+        uint32_t kInvalidCANId_{0};
+        uint32_t kSparkMaxDataPortAlreadyConfiguredDifferently_{0};
     };
 
     std::string FirmwareInfo(const uint32_t firmwareVersion, const std::string &firmwareString) noexcept
@@ -341,8 +341,8 @@ void SparkMax::SetConfig(const ConfigMap config) noexcept
 
     // Ensure at least these two config parameters are managed.
     config_.clear();
-    config_["Firmware Version"] = std::get<uint>(SparkMaxFactory::configDefaults.at("Firmware Version"));
-    config_["kIdleMode"] = std::get<uint>(SparkMaxFactory::configDefaults.at("kIdleMode"));
+    config_["Firmware Version"] = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("Firmware Version"));
+    config_["kIdleMode"] = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kIdleMode"));
 
     // The order matters here, hence the somewhat convoluted logic.
     tmp.merge(config_);
@@ -660,7 +660,7 @@ void SparkMax::Periodic() noexcept
     // If the rate for Periodic() is too low (< ~20Hz), things are going to run
     // slowly, but the robot is going to be generally sluggish at that point.
     const uint64_t FPGATime = frc::RobotController::GetFPGATime();
-    uint deltaTime = FPGATime - FPGATime_;
+    uint64_t deltaTime = FPGATime - FPGATime_;
 
     if (++iteration_ % 16 != canId_ % 16 || deltaTime < 250)
     {
@@ -787,18 +787,18 @@ void SparkMax::ConfigPeriodic() noexcept
         // Optimized for setting periodic frame period, not appropriate for
         // general config parameters.  Relies on particulars for these config
         // parameters, which isn't great, but is documented behavior.
-        auto periodicFramePeriod = [&](const std::string_view k, const uint v) -> bool
+        auto periodicFramePeriod = [&](const std::string_view k, const uint32_t v) -> bool
         {
             // Check against default value (other results are not
             // interesting in this specific context, absent coding errors).
             // This is fast/"free", so it does not need it's own state.
-            const std::tuple<bool, bool, std::string> verify = VerifyConfig(k, uint{v});
+            const std::tuple<bool, bool, std::string> verify = VerifyConfig(k, uint32_t{v});
 
             // If this needs to be set following reset of controller...
             if (std::get<1>(verify))
             {
                 // This isn't fast, so it consumes this Periodic() iteration.
-                const std::string apply = ApplyConfig(k, uint{v});
+                const std::string apply = ApplyConfig(k, uint32_t{v});
 
                 if (!apply.empty())
                 {
@@ -838,11 +838,11 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             else
             {
-                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchFwdPolarity"));
+                uint32_t tmp = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kLimitSwitchFwdPolarity"));
 
                 if (config_.count("kLimitSwitchFwdPolarity") != 0)
                 {
-                    tmp = std::get<uint>(config_.at("kLimitSwitchFwdPolarity"));
+                    tmp = std::get<uint32_t>(config_.at("kLimitSwitchFwdPolarity"));
                 }
 
                 const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
@@ -873,11 +873,11 @@ void SparkMax::ConfigPeriodic() noexcept
             }
             else
             {
-                uint tmp = std::get<uint>(SparkMaxFactory::configDefaults.at("kLimitSwitchRevPolarity"));
+                uint32_t tmp = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kLimitSwitchRevPolarity"));
 
                 if (config_.count("kLimitSwitchRevPolarity") != 0)
                 {
-                    tmp = std::get<uint>(config_.at("kLimitSwitchRevPolarity"));
+                    tmp = std::get<uint32_t>(config_.at("kLimitSwitchRevPolarity"));
                 }
 
                 const rev::SparkMaxLimitSwitch::Type polarity = tmp == 0 ? rev::SparkMaxLimitSwitch::Type::kNormallyOpen : rev::SparkMaxLimitSwitch::Type::kNormallyClosed;
@@ -1414,25 +1414,25 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
     // and there is no way to verify them.
     case 4:
         name = "Status0";
-        actual_value = uint{status0_};
+        actual_value = uint32_t{status0_};
         break;
     case 3:
         name = "Status1";
-        actual_value = uint{status1_};
+        actual_value = uint32_t{status1_};
         break;
     case 2:
         name = "Status2";
-        actual_value = uint{status2_};
+        actual_value = uint32_t{status2_};
         break;
     case 58:
         name = "Firmware Version (";
         if (motor_)
         {
-            const uint val = motor_->GetFirmwareVersion();
+            const uint32_t val = motor_->GetFirmwareVersion();
             const std::string str = motor_->GetFirmwareString();
 
             name += FirmwareInfo(val, str);
-            actual_value = uint{val};
+            actual_value = uint32_t{val};
         }
         name += ")";
         break;
@@ -1444,13 +1444,13 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
 
             if (tmp == rev::CANSparkMax::IdleMode::kCoast)
             {
-                actual_value = uint{0};
+                actual_value = uint32_t{0};
             } else if (tmp == rev::CANSparkMax::IdleMode::kBrake)
             {
-                actual_value = uint{1};
+                actual_value = uint32_t{1};
 
                 // Force update for non-standard default.
-                default_value = uint{0};
+                default_value = uint32_t{0};
             }
         }
         break;
@@ -1490,7 +1490,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         }
         else
         {
-            actual_value = uint{0};
+            actual_value = uint32_t{0};
         }
         break;
     case 40:
@@ -1501,7 +1501,7 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         }
         else
         {
-            actual_value = uint{0};
+            actual_value = uint32_t{0};
         }
         break;
     case 6:
@@ -1550,28 +1550,28 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
         name = "EncoderAverageDepth";
         if (!altMode && encoder_)
         {
-            actual_value = uint{encoder_->GetAverageDepth()};
+            actual_value = uint32_t{encoder_->GetAverageDepth()};
         }
         break;
     case 57:
         name = "AltEncoderAverageDepth";
         if (altMode && encoder_)
         {
-            actual_value = uint{encoder_->GetAverageDepth()};
+            actual_value = uint32_t{encoder_->GetAverageDepth()};
         }
         break;
     case 43:
         name = "EncoderSampleDelta";
         if (!altMode && encoder_)
         {
-            actual_value = uint{encoder_->GetMeasurementPeriod()};
+            actual_value = uint32_t{encoder_->GetMeasurementPeriod()};
         }
         break;
     case 54:
         name = "AltEncoderSampleDelta";
         if (altMode && encoder_)
         {
-            actual_value = uint{encoder_->GetMeasurementPeriod()};
+            actual_value = uint32_t{encoder_->GetMeasurementPeriod()};
         }
         break;
     case 21:
@@ -1723,11 +1723,11 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
 
             if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
             {
-                actual_value = uint{0};
+                actual_value = uint32_t{0};
             }
             else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
             {
-                actual_value = uint{1};
+                actual_value = uint32_t{1};
             }
         }
         break;
@@ -1832,11 +1832,11 @@ std::tuple<bool, bool, std::string> SparkMax::VerifyConfig(const std::string_vie
 
             if (tmp == rev::SparkMaxPIDController::AccelStrategy::kTrapezoidal)
             {
-                actual_value = uint{0};
+                actual_value = uint32_t{0};
             }
             else if (tmp == rev::SparkMaxPIDController::AccelStrategy::kSCurve)
             {
-                actual_value = uint{1};
+                actual_value = uint32_t{1};
             }
         }
         break;
@@ -1928,7 +1928,7 @@ std::string SparkMax::ApplyConfig(const std::string_view key, const ConfigValue 
     std::string name = "Unknown";
 
     const bool *const pbool = std::get_if<bool>(&value);
-    const uint *const puint = std::get_if<uint>(&value);
+    const uint32_t *const puint = std::get_if<uint32_t>(&value);
     const double *const pdouble = std::get_if<double>(&value);
 
     // In general, these are slow (round-trip to the controller) API calls.

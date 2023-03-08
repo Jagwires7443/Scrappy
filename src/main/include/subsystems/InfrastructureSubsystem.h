@@ -29,11 +29,11 @@ public:
 
     units::pressure::pounds_per_square_inch_t GetPressure() noexcept;
 
-    uint GetLEDPatternCount() noexcept;
+    uint32_t GetLEDPatternCount() noexcept;
 
-    std::string_view GetLEDPatternDescription(uint pattern) noexcept;
+    std::string_view GetLEDPatternDescription(uint32_t pattern) noexcept;
 
-    void SetLEDPattern(uint pattern) noexcept;
+    void SetLEDPattern(uint32_t pattern) noexcept;
 
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
