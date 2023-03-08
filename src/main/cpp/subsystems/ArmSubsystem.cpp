@@ -74,16 +74,6 @@ void ArmSubsystem::Periodic() noexcept
     shoulderMotor_->Periodic();
     elbowMotor_->Periodic();
 
-    ++iteration_; // XXX temp, remove
-
-    bool prints = iteration_ == 20;
-    std::string comments;
-
-    if (prints)
-    {
-        iteration_ = 0;
-    }
-
     const auto shoulderSensor = shoulderSensor_->GetAbsolutePosition();
     const auto elbowSensor = elbowSensor_->GetAbsolutePosition();
 
@@ -93,7 +83,7 @@ void ArmSubsystem::Periodic() noexcept
         shoulderMotor_->Stop();
         elbowMotor_->Stop();
 
-        if (prints)
+        if (print_)
         {
             printf("**** Arm Sensor Fault!\n");
         }
@@ -227,6 +217,8 @@ void ArmSubsystem::Periodic() noexcept
         elbow = -0.25;
     }
 
+    std::string comments;
+
     // Shoulder exclusion zone is centered on 90 degrees.
     if (shoulderAngle_ >= arm::shoulderNegativeStopLimit && shoulderAngle_ < 90.0_deg && shoulder < 0.0)
     {
@@ -302,7 +294,7 @@ void ArmSubsystem::Periodic() noexcept
         elbow = arm::elbowSlowPower;
     }
 
-    if (prints)
+    if (print_)
     {
         printf("**** Arm Status: SA=%lf EA=%lf DL=%lf DA=%lf SM=%lf EM=%lf SO=%lf EO=%lf%s\n",
                shoulderAngle_.value(),

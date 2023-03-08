@@ -43,6 +43,11 @@ public:
   }
 
 #ifdef RUNNING_FRC_TESTS
+  void TestPrint() noexcept
+  {
+    print_ = true;
+  }
+
   units::length::meter_t TestGetDottedLength() noexcept
   {
     return dottedLength_;
@@ -103,5 +108,5 @@ private:
   units::length::meter_t dottedLength_{0.0_m};
   units::angle::degree_t dottedAngle_{0.0_deg};
 
-  uint32_t iteration_{0};
+  bool print_{false};
 };
