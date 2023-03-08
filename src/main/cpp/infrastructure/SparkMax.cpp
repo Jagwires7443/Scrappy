@@ -313,7 +313,7 @@ void SparkMaxFactory::ConfigIndex() noexcept
 
         const auto ndx = std::distance(kv, configDefaults.end());
 
-        std::printf("Index: %s = %lli\n", elem.first.c_str(), ndx);
+        std::printf("Index: %s = %lli\n", elem.first.c_str(), int64_t{ndx});
     }
 }
 
