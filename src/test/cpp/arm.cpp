@@ -5,6 +5,8 @@
 #include "Constants.h"
 #include "subsystems/ArmSubsystem.h"
 
+#include <cmath>
+
 using frc::sim::DutyCycleSim;
 
 class ArmTest : public testing::Test
@@ -79,6 +81,9 @@ void ArmTest::SetElbowAngle(units::angle::degree_t angle) noexcept
     simElbowSensor.SetOutput(position / 1025.0);
 }
 
+// NOTE: Angles can be off by a significant fraction of a degree, due
+// to the granularity of the sensor (and work possibly needed in PWMAngleSensor).
+
 // Ensure the mock sensors are behaving as expected (for both PWM and angle).
 TEST_F(ArmTest, SensorsFaked)
 {
@@ -109,29 +114,53 @@ TEST_F(ArmTest, DottedCaclulations)
     double expectedLength{0.0};
     double expectedAngle{0.0};
 
-    SetShoulderAngle(0.0_deg);
-    SetElbowAngle(0.0_deg);
+    SetShoulderAngle(0.0_deg); // Horizontal forward
+    SetElbowAngle(0.0_deg);    // Straight
     arm_.Periodic();
     expectedLength = units::length::meter_t{arm::upperArmLength + arm::lowerArmLength}.value();
     expectedAngle = 0.0;
-    EXPECT_GT(0.010, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.275, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
 
-    return; // XXX
+    // Right triangles are a special case, ensure math is correct in these cases.
 
-    SetShoulderAngle(-180.0_deg);
-    SetElbowAngle(-180.0_deg);
+    // Start off with shoulder at zero angle, so arm and robot coordinate systems
+    // are aligned.
+
+    SetShoulderAngle(0.0_deg); // Horizontal forward
+    SetElbowAngle(-90.0_deg);  // Up
     arm_.Periodic();
-    expectedLength = units::length::meter_t{arm::upperArmLength + arm::lowerArmLength}.value();
-    expectedAngle = 0.0;
-    EXPECT_GT(0.010, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.275, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+    expectedLength = sqrt(pow(units::length::meter_t{arm::upperArmLength}.value(), 2.0) +
+                          pow(units::length::meter_t{arm::lowerArmLength}.value(), 2.0));
+    expectedAngle = units::angle::degree_t{
+        units::angle::radian_t{
+            acos(units::length::meter_t{arm::upperArmLength}.value() / expectedLength)}}
+                        .value();
+    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() + expectedAngle));
 
-    SetShoulderAngle(+179.6484375_deg);
-    SetElbowAngle(+179.6484375_deg);
+    SetShoulderAngle(0.0_deg); // Horizontal forward
+    SetElbowAngle(+90.0_deg);  // Down
     arm_.Periodic();
-    expectedLength = units::length::meter_t{arm::upperArmLength + arm::lowerArmLength}.value();
-    expectedAngle = 0.0;
-    EXPECT_GT(0.010, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.275, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+    // expectedLength and expectedAngle are unchanged from prior case, direction is
+    // reversed
+    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+
+    // Now, rotate shoulder and verify that dotted angle is in the robot coordinate
+    // system.
+
+    SetShoulderAngle(-90.0_deg); // Up
+    SetElbowAngle(+90.0_deg);    // Horizontal forward
+    arm_.Periodic();
+    // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
+    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle + 90.0));
+
+    SetShoulderAngle(-180.0_deg); // Horizontal backward
+    SetElbowAngle(+90.0_deg);     // Up
+    arm_.Periodic();
+    // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
+    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle + 180.0));
 }
