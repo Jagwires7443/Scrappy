@@ -96,6 +96,10 @@ public:
     elbowControlUI_ = percent;
   } // XXX
 
+  void SetShoulderAngle(units::angle::degree_t angle) noexcept;
+
+  void SetElbowAngle(units::angle::degree_t angle) noexcept;
+
   void OpenGrip() noexcept;
   void CloseGrip() noexcept;
   void RelaxGrip() noexcept;

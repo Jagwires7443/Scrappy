@@ -46,6 +46,12 @@ ArmSubsystem::ArmSubsystem() noexcept
     pneuGrip_ = std::make_unique<frc::DoubleSolenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kGripPneuOpen, nonDrive::kGripPneuClose);
     motorGrip_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kGripMotorCanID);
 
+    // Note that these controllers will avoid wrapping at [-180.0_deg, +180.0_deg).
+    // For the shoulder, must avoid -90.0_deg; for the elbow, must avoid 0.0_deg.
+    // Since gravity is handled via feedforward, it is possible to rotate the no-wrap
+    // point -- simply by compensating in both SetGoal() and Calculate().
+    // For the shoulder, rotate by -90.0_deg.  For the elbow, rotate by +180.0_deg.
+
     shoulderPIDController_ = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
         arm::kShoulderPositionP,
         0.0,
@@ -65,6 +71,38 @@ ArmSubsystem::ArmSubsystem() noexcept
             arm::kElbowPositionMaxAcceleration}));
     elbowPIDController_->DisableContinuousInput();
     elbowPIDController_->SetTolerance(arm::kElbowTolerance);
+}
+
+void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
+{
+    units::angle::degree_t rotatedAngle = angle - 90.0_deg;
+
+    while (rotatedAngle >= +180.0_deg)
+    {
+        rotatedAngle -= 360.0_deg;
+    }
+    while (rotatedAngle < -180.0_deg)
+    {
+        rotatedAngle += 360.0_deg;
+    }
+
+    shoulderPIDController_->SetGoal(rotatedAngle);
+}
+
+void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
+{
+    units::angle::degree_t rotatedAngle = angle + 180.0_deg;
+
+    while (rotatedAngle >= +180.0_deg)
+    {
+        rotatedAngle -= 360.0_deg;
+    }
+    while (rotatedAngle < -180.0_deg)
+    {
+        rotatedAngle += 360.0_deg;
+    }
+
+    elbowPIDController_->SetGoal(rotatedAngle);
 }
 
 void ArmSubsystem::Periodic() noexcept
@@ -175,8 +213,29 @@ void ArmSubsystem::Periodic() noexcept
     gripperY_ = dottedLength_ * cos(units::angle::radian_t{dottedAngle_}.value());
 
     // Obtain base percent power settings, from each ProfiledPIDController.
-    double shoulder = shoulderPIDController_->Calculate(shoulderAngle_);
-    double elbow = elbowPIDController_->Calculate(elbowAngle_);
+    units::angle::degree_t rotatedShoulderAngle = shoulderAngle_ - 90.0_deg;
+    units::angle::degree_t rotatedElbowAngle = elbowAngle_ + 180.0_deg;
+
+    while (rotatedShoulderAngle >= +180.0_deg)
+    {
+        rotatedShoulderAngle -= 360.0_deg;
+    }
+    while (rotatedShoulderAngle < -180.0_deg)
+    {
+        rotatedShoulderAngle += 360.0_deg;
+    }
+
+    while (rotatedElbowAngle >= +180.0_deg)
+    {
+        rotatedElbowAngle -= 360.0_deg;
+    }
+    while (rotatedElbowAngle < -180.0_deg)
+    {
+        rotatedElbowAngle += 360.0_deg;
+    }
+
+    double shoulder = shoulderPIDController_->Calculate(rotatedShoulderAngle);
+    double elbow = elbowPIDController_->Calculate(rotatedElbowAngle);
 
     // XXX
     // Find the moment arm with respect to gravity -- the horizontal projection
