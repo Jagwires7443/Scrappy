@@ -11,6 +11,11 @@
 
 void Robot::RobotInit() noexcept
 {
+  // URL: http://roborio-<TEAM>-frc.local:1181/?action=stream
+  //  or: http://10.<TE>.<AM>.2:1181/?action=stream
+  // See https://github.com/WPIRoboticsProjects/GRIP.
+  m_camera = frc::CameraServer::StartAutomaticCapture("USB Camera 0", 0);
+
   frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
 

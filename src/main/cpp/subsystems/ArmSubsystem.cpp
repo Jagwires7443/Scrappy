@@ -30,7 +30,7 @@ ArmSubsystem::ArmSubsystem() noexcept
         {"kStatus2", uint32_t{250}}, // ms
         {"kPositionConversionFactor", double{360.0}},
         {"kVelocityConversionFactor", double{360.0 / 60.0}},
-        {"kIdleMode", uint32_t{1}},
+        {"kIdleMode", uint32_t{1}}, // Brake mode
     });
     shoulderMotor_->ApplyConfig(false);
 
@@ -39,14 +39,13 @@ ArmSubsystem::ArmSubsystem() noexcept
         {"kStatus2", uint32_t{250}}, // ms
         {"kPositionConversionFactor", double{360.0}},
         {"kVelocityConversionFactor", double{360.0 / 60.0}},
-        {"kIdleMode", uint32_t{1}},
+        {"kIdleMode", uint32_t{1}}, // Brake mode
     });
     elbowMotor_->ApplyConfig(false);
 
     pneuGrip_ = std::make_unique<frc::DoubleSolenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kGripPneuOpen, nonDrive::kGripPneuClose);
     motorGrip_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kGripMotorCanID);
 
-    // XXX Need real constants here!!!
     shoulderPIDController_ = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
         arm::kShoulderPositionP,
         0.0,
@@ -55,8 +54,8 @@ ArmSubsystem::ArmSubsystem() noexcept
             arm::kShoulderPositionMaxVelocity,
             arm::kShoulderPositionMaxAcceleration}));
     shoulderPIDController_->DisableContinuousInput();
+    shoulderPIDController_->SetTolerance(arm::kShoulderTolerance);
 
-    // XXX Need real constants here!!!
     elbowPIDController_ = std::make_unique<frc::ProfiledPIDController<units::angle::degrees>>(
         arm::kElbowPositionP,
         0.0,
@@ -65,6 +64,7 @@ ArmSubsystem::ArmSubsystem() noexcept
             arm::kElbowPositionMaxVelocity,
             arm::kElbowPositionMaxAcceleration}));
     elbowPIDController_->DisableContinuousInput();
+    elbowPIDController_->SetTolerance(arm::kElbowTolerance);
 }
 
 void ArmSubsystem::Periodic() noexcept
@@ -88,48 +88,71 @@ void ArmSubsystem::Periodic() noexcept
             printf("**** Arm Sensor Fault!\n");
         }
 
+        status_ = false;
+
         return;
     }
 
     shoulderAngle_ = shoulderSensor.value();
     elbowAngle_ = elbowSensor.value();
 
-    double shoulder = shoulderPIDController_->Calculate(shoulderAngle_);
-    double elbow = elbowPIDController_->Calculate(elbowAngle_);
+    status_ = true;
 
     // Geometry:
-    // Upper arm has length, and angle (increasing counter-clockwise, with zero
-    // horizontal forward); lower arm has length, and angle (increasing
-    // counter-clockwise, with zero when elbow is straight); motors must be set
-    // up for same direction for angle increase with "forward" power.
 
-    // Work out the third side of the triangle, formed by the upper and lower
-    // arms.  Specifically, find the length of this side as well as the angle
-    // between this third side and the upper arm.  This is useful in compensating
-    // for gravity, as well as checking limits.
+    // Because of the direction of rotation for the sensors, this is all with the
+    // perspective of viewing the robot from the robot's left side, so the front of
+    // the robot is at the viewer's left.  The motor inversion settings are for the
+    // same direction of rotation as the sensors: counter-clockwise is positive, as
+    // in the unit circle of trigonometry.  Following this convention, zero degrees
+    // for the shoulder is with the arm horizontal, but to the *rear* of the robot.
 
-    // For this calculation, the elbow angle needs to be adjusted to follow
-    // convention.
-    units::angle::degree_t realAngle = elbowAngle_ - 180.0_deg;
+    // In the coordinate system and frame of reference of the arm, the origin is at
+    // the shoulder joint.  The upper arm has a fixed length, so the elbow folows a
+    // circle of this radius.  The range for the shoulder angle is [-180.0_deg,
+    // +180.0_deg) -- in other words, this angle is >= -180.0_deg and < +180.0_deg.
 
-    if (realAngle < -180.0_deg)
-    {
-        realAngle += 360.0_deg;
-    }
+    // Because of the structure of the robot, there is an excluded range of angle for
+    // the shoulder, centered on -90.0_deg.  This is irrespective of any restrictions
+    // on the overall arm.
+
+    // The natural coordinate system for the elbow has it's origin at the elbow joint
+    // and moves with the upper arm.  Viewing perspective, direction of rotation, and
+    // the range are all the same as for the shoulder.  However, the zero angle
+    // reference is fixed to the upper arm.  Specifically, zero angle is when the
+    // elbow is folded back onto the upper arm.  Thus, the excluded range for the
+    // elbow angle is centered on 0.0_deg.  The lower arm length includes the gripper
+    // to facillitate checking for disallowed excursions.
+
+    // The sensor offsets must be adjusted for these coordinate systems, as well as
+    // the inversion settings of the motors.  Transforms are performed from these
+    // coordinate systems.  Start by getting (X, Y) coordinates of the elbow.
+
+    elbowX_ = arm::upperArmLength * sin(units::angle::radian_t{shoulderAngle_}.value());
+    elbowY_ = arm::upperArmLength * cos(units::angle::radian_t{shoulderAngle_}.value());
+
+    // Work out the third side of the triangle formed by the upper and lower arms
+    // and transform this into the robot/shoulder coordinate system.  Specifically,
+    // find the length of this side, as well as the angle between this third side
+    // and the upper arm.  Then, use the angle of the upper arm to transform this
+    // angle to the robot/shoulder coordinate system. This is useful in
+    // compensating for gravity, as well as checking limits.  Here, the upper arm
+    // is "a", the lower arm is "b", and the third side is "c".  The angles are
+    // opposite the corresponding side.
 
     // Law of cosines: c = sqrt(a^2 + b^2 - 2*a*b*cos(angle_c))
     dottedLength_ = units::length::meter_t{sqrt(
-        pow(units::length::meter_t{arm::upperArmLength}.value(), 2.0) +
-        pow(units::length::meter_t{arm::lowerArmLength}.value(), 2.0) -
+        pow(units::length::meter_t{arm::upperArmLength}.value(), 2) +
+        pow(units::length::meter_t{arm::lowerArmLength}.value(), 2) -
         2.0 * units::length::meter_t{arm::upperArmLength}.value() *
             units::length::meter_t{arm::lowerArmLength}.value() *
-            cos(units::angle::radian_t{realAngle}.value()))};
+            cos(units::angle::radian_t{elbowAngle_}.value()))};
 
     // Law of cosines: angle_b = arc_cos((c^2 + a^2 - b^2) / (2*c*a))
     double imprecision =
-        (pow(units::length::meter_t{dottedLength_}.value(), 2.0) +
-         pow(units::length::meter_t{arm::upperArmLength}.value(), 2.0) -
-         pow(units::length::meter_t{arm::lowerArmLength}.value(), 2.0)) /
+        (pow(units::length::meter_t{dottedLength_}.value(), 2) +
+         pow(units::length::meter_t{arm::upperArmLength}.value(), 2) -
+         pow(units::length::meter_t{arm::lowerArmLength}.value(), 2)) /
         (2.0 * units::length::meter_t{dottedLength_}.value() *
          units::length::meter_t{arm::upperArmLength}.value());
 
@@ -146,18 +169,14 @@ void ArmSubsystem::Periodic() noexcept
     // Now, adjust this angle to account for it being relative to shoulder angle,
     // so that the final angle is in the robot coordinate system, instead of that
     // of the shoulder.
-    if (elbowAngle_ > 0.0_deg)
-    {
-        dottedAngle_ = shoulderAngle_ + units::angle::radian_t{acos(imprecision)};
-    }
-    else if (elbowAngle_ < 0.0_deg)
-    {
-        dottedAngle_ = shoulderAngle_ - units::angle::radian_t{acos(imprecision)};
-    }
-    else
-    {
-        dottedAngle_ = shoulderAngle_;
-    }
+    dottedAngle_ = shoulderAngle_ + units::angle::radian_t{acos(imprecision)};
+
+    gripperX_ = dottedLength_ * sin(units::angle::radian_t{dottedAngle_}.value());
+    gripperY_ = dottedLength_ * cos(units::angle::radian_t{dottedAngle_}.value());
+
+    // Obtain base percent power settings, from each ProfiledPIDController.
+    double shoulder = shoulderPIDController_->Calculate(shoulderAngle_);
+    double elbow = elbowPIDController_->Calculate(elbowAngle_);
 
     // Find the moment arm with respect to gravity -- the horizontal projection
     // of the third side of the triangle.  This acts at the shoulder.
@@ -168,7 +187,7 @@ void ArmSubsystem::Periodic() noexcept
 
     // Now do these calculations for the elbow.
     units::length::meter_t elbowMoment = arm::lowerArmLength *
-                                         fabs(cos(units::angle::radian_t{180.0_deg - shoulderAngle_ - realAngle}.value()));
+                                         fabs(cos(units::angle::radian_t{180.0_deg - shoulderAngle_ - elbowAngle_}.value()));
     units::torque::newton_meter_t elbowTorqueGravity = elbowMoment * arm::pointMass * arm::gravity;
     double elbowPercentTorqueGravity = elbowTorqueGravity / arm::elbowMaxTorque;
 
@@ -310,6 +329,28 @@ void ArmSubsystem::Periodic() noexcept
 
     shoulderMotor_->SetVoltage(shoulder * 12.0_V);
     elbowMotor_->SetVoltage(elbow * 12.0_V);
+}
+
+bool ArmSubsystem::InPosition() noexcept
+{
+    if (!shoulderPIDController_->AtGoal() || !elbowPIDController_->AtGoal())
+    {
+        return false;
+    }
+
+    units::angle::degree_t shoulderError = commandedShoulderAngle_ - shoulderAngle_;
+    units::angle::degree_t elbowError = commandedElbowAngle_ - elbowAngle_;
+
+    if (shoulderError < 0.0_deg)
+    {
+        shoulderError *= -1.0;
+    }
+    if (elbowError < 0.0_deg)
+    {
+        elbowError *= -1.0;
+    }
+
+    return (shoulderError < arm::kShoulderTolerance) && (elbowError < arm::kElbowTolerance);
 }
 
 void ArmSubsystem::TestInit() noexcept

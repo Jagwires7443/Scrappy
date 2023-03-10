@@ -6,6 +6,8 @@
 
 #include <optional>
 
+// Needed for USB camera.
+#include <cameraserver/CameraServer.h>
 #include <frc/TimedRobot.h>
 #include <frc2/command/CommandPtr.h>
 
@@ -30,6 +32,8 @@ public:
   void TestExit() noexcept override;
 
 private:
+  cs::UsbCamera m_camera;
+
   std::optional<frc2::CommandPtr> m_autonomousCommand;
 
   RobotContainer m_container;

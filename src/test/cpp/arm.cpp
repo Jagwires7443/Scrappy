@@ -6,6 +6,7 @@
 #include "subsystems/ArmSubsystem.h"
 
 #include <cmath>
+#include <string_view>
 
 using frc::sim::DutyCycleSim;
 
@@ -19,10 +20,16 @@ protected:
     void SetShoulderAngle(units::angle::degree_t angle) noexcept;
     void SetElbowAngle(units::angle::degree_t angle) noexcept;
 
+    void SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept;
+    bool CheckData(std::string_view tag) noexcept;
+
     ArmSubsystem arm_;
 
     DutyCycleSim simShoulderSensor = DutyCycleSim::CreateForChannel(nonDrive::kShoulderEncoderPort);
     DutyCycleSim simElbowSensor = DutyCycleSim::CreateForChannel(nonDrive::kElbowEncoderPort);
+
+    units::angle::degree_t shoulderAngle_{0.0_deg};
+    units::angle::degree_t elbowAngle_{0.0_deg};
 };
 
 // Go from [-180.0, +180.0) to [-0.5, +0.5), then to [0.0, 1.0), then
@@ -81,26 +88,55 @@ void ArmTest::SetElbowAngle(units::angle::degree_t angle) noexcept
     simElbowSensor.SetOutput(position / 1025.0);
 }
 
+void ArmTest::SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept
+{
+    shoulderAngle_ = shoulderAngle;
+    elbowAngle_ = elbowAngle;
+
+    SetShoulderAngle(shoulderAngle);
+    SetElbowAngle(elbowAngle);
+}
+
+bool ArmTest::CheckData(std::string_view tag) noexcept
+{
+    units::angle::degree_t shoulderAngle = arm_.GetShoulderAngle();
+    units::angle::degree_t elbowAngle = arm_.GetElbowAngle();
+    units::length::meter_t elbowX = arm_.GetElbowX();
+    units::length::meter_t elbowY = arm_.GetElbowY();
+    units::length::meter_t gripperX = arm_.GetGripperX();
+    units::length::meter_t gripperY = arm_.GetGripperY();
+    units::length::meter_t dottedLength = arm_.GetDottedLength();
+    units::angle::degree_t dottedAngle = arm_.GetDottedAngle();
+
+    units::angle::degree_t shoulderAngleError = shoulderAngle_ - shoulderAngle;
+    units::angle::degree_t elbowAngleError = elbowAngle_ - elbowAngle;
+
+    if (shoulderAngleError > +2.5_deg || shoulderAngleError < -2.5_deg ||
+        elbowAngleError > +2.5_deg || elbowAngleError < -2.5_deg)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 // NOTE: Angles can be off by a significant fraction of a degree, due
 // to the granularity of the sensor (and work possibly needed in PWMAngleSensor).
 
 // Ensure the mock sensors are behaving as expected (for both PWM and angle).
 TEST_F(ArmTest, SensorsFaked)
 {
-    SetShoulderAngle(0.0_deg);
-    SetElbowAngle(0.0_deg);
+    SetAngles(0.0_deg, 0.0_deg);
     arm_.Periodic();
     EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value()));
     EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value()));
 
-    SetShoulderAngle(-180.0_deg);
-    SetElbowAngle(-180.0_deg);
+    SetAngles(-180.0_deg, -180.0_deg);
     arm_.Periodic();
     EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value() + 180.0));
     EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value() + 180.0));
 
-    SetShoulderAngle(+179.6484375_deg);
-    SetElbowAngle(+179.6484375_deg);
+    SetAngles(+179.6484375_deg, +179.6484375_deg);
     arm_.Periodic();
     EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value() - 180.0));
     EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value() - 180.0));
@@ -109,58 +145,53 @@ TEST_F(ArmTest, SensorsFaked)
 // Ensure the math is working for the third side of the arm triangle.
 TEST_F(ArmTest, DottedCaclulations)
 {
-    arm_.TestPrint();
+    arm_.TestPrint(); // Turn on extra arm output
 
     double expectedLength{0.0};
     double expectedAngle{0.0};
 
-    SetShoulderAngle(0.0_deg); // Horizontal forward
-    SetElbowAngle(0.0_deg);    // Straight
+    SetAngles(0.0_deg, -180.0_deg); // Horizontal rearward / Straight
     arm_.Periodic();
+    // XXX use hypot(); do two-step x,y conversion...
     expectedLength = units::length::meter_t{arm::upperArmLength + arm::lowerArmLength}.value();
     expectedAngle = 0.0;
-    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
     // Right triangles are a special case, ensure math is correct in these cases.
 
     // Start off with shoulder at zero angle, so arm and robot coordinate systems
     // are aligned.
 
-    SetShoulderAngle(0.0_deg); // Horizontal forward
-    SetElbowAngle(-90.0_deg);  // Up
+    SetAngles(0.0_deg, -90.0_deg); // Horizontal forward / Up
     arm_.Periodic();
-    expectedLength = sqrt(pow(units::length::meter_t{arm::upperArmLength}.value(), 2.0) +
-                          pow(units::length::meter_t{arm::lowerArmLength}.value(), 2.0));
+    expectedLength = std::hypot(units::length::meter_t{arm::upperArmLength}.value(), units::length::meter_t{arm::lowerArmLength}.value());
     expectedAngle = units::angle::degree_t{
         units::angle::radian_t{
             acos(units::length::meter_t{arm::upperArmLength}.value() / expectedLength)}}
                         .value();
-    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() + expectedAngle));
+    EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
-    SetShoulderAngle(0.0_deg); // Horizontal forward
-    SetElbowAngle(+90.0_deg);  // Down
+    SetAngles(0.0_deg, +90.0_deg); // Horizontal forward / Down
     arm_.Periodic();
     // expectedLength and expectedAngle are unchanged from prior case, direction is
     // reversed
-    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
     // Now, rotate shoulder and verify that dotted angle is in the robot coordinate
     // system.
 
-    SetShoulderAngle(-90.0_deg); // Up
-    SetElbowAngle(+90.0_deg);    // Horizontal forward
+    SetAngles(-90.0_deg, +90.0_deg); // Up / Horizontal forward
     arm_.Periodic();
     // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
-    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle + 90.0));
+    EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle + 90.0));
 
-    SetShoulderAngle(-180.0_deg); // Horizontal backward
-    SetElbowAngle(+90.0_deg);     // Up
+    SetAngles(-180.0_deg, +90.0_deg); // Horizontal backward / Up
     arm_.Periodic();
     // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
-    EXPECT_GT(0.01, fabs(arm_.TestGetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.TestGetDottedAngle().value() - expectedAngle + 180.0));
+    EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
+    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle + 180.0));
 }

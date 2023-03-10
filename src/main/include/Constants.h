@@ -104,7 +104,7 @@ namespace pidf
     // RPM or 1589.28 degrees per second.  For MK3, Steering ratio is 12.8:1.
     constexpr units::angular_velocity::degrees_per_second_t kTurningPositionMaxVelocity = 1250.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kTurningPositionMaxAcceleration = 12500.0_deg_per_s_sq;
-    constexpr double kTurningPositionP = 0.006;
+    constexpr double kTurningPositionP = 0.005;
     constexpr double kTurningPositionF = 0.003;
 
     constexpr double kTurningPositionI = 0.0;
@@ -171,10 +171,12 @@ namespace arm
     constexpr units::angular_velocity::degrees_per_second_t kShoulderPositionMaxVelocity = 90.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kShoulderPositionMaxAcceleration = 900.0_deg_per_s_sq;
     constexpr double kShoulderPositionP = 0.006;
+    constexpr units::angle::degree_t kShoulderTolerance = 2.5_deg;
 
     constexpr units::angular_velocity::degrees_per_second_t kElbowPositionMaxVelocity = 90.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kElbowPositionMaxAcceleration = 900.0_deg_per_s_sq;
     constexpr double kElbowPositionP = 0.006;
+    constexpr units::angle::degree_t kElbowTolerance = 2.5_deg;
 
     // Fixed voltage required to overcome static friction to get things moving.
     constexpr double shoulderStaticFeedforward = 0.005;

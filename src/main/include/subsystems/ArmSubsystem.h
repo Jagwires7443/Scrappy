@@ -32,6 +32,13 @@ public:
   void DisabledInit() noexcept;
   void DisabledExit() noexcept;
 
+  bool Status() noexcept
+  {
+    return status_;
+  }
+
+  bool InPosition() noexcept;
+
   units::angle::degree_t GetShoulderAngle() noexcept
   {
     return shoulderAngle_;
@@ -42,20 +49,40 @@ public:
     return elbowAngle_;
   }
 
-#ifdef RUNNING_FRC_TESTS
-  void TestPrint() noexcept
+  units::length::meter_t GetElbowX() noexcept
   {
-    print_ = true;
+    return elbowX_;
   }
 
-  units::length::meter_t TestGetDottedLength() noexcept
+  units::length::meter_t GetElbowY() noexcept
+  {
+    return elbowY_;
+  }
+
+  units::length::meter_t GetGripperX() noexcept
+  {
+    return gripperX_;
+  }
+
+  units::length::meter_t GetGripperY() noexcept
+  {
+    return gripperY_;
+  }
+
+  units::length::meter_t GetDottedLength() noexcept
   {
     return dottedLength_;
   }
 
-  units::angle::degree_t TestGetDottedAngle() noexcept
+  units::angle::degree_t GetDottedAngle() noexcept
   {
     return dottedAngle_;
+  }
+
+#ifdef RUNNING_FRC_TESTS
+  void TestPrint() noexcept
+  {
+    print_ = true;
   }
 #endif
 
@@ -105,8 +132,15 @@ private:
   units::angle::degree_t shoulderAngle_{0.0_deg};
   units::angle::degree_t elbowAngle_{0.0_deg};
 
+  units::length::meter_t elbowX_{0.0_m};
+  units::length::meter_t elbowY_{0.0_m};
+
+  units::length::meter_t gripperX_{0.0_m};
+  units::length::meter_t gripperY_{0.0_m};
+
   units::length::meter_t dottedLength_{0.0_m};
   units::angle::degree_t dottedAngle_{0.0_deg};
 
+  bool status_{false};
   bool print_{false};
 };
