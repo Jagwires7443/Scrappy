@@ -178,6 +178,7 @@ void ArmSubsystem::Periodic() noexcept
     double shoulder = shoulderPIDController_->Calculate(shoulderAngle_);
     double elbow = elbowPIDController_->Calculate(elbowAngle_);
 
+    // XXX
     // Find the moment arm with respect to gravity -- the horizontal projection
     // of the third side of the triangle.  This acts at the shoulder.
     units::length::meter_t shoulderMoment = dottedLength_ *
@@ -218,100 +219,168 @@ void ArmSubsystem::Periodic() noexcept
         elbow -= arm::elbowStaticFeedforward + elbowPercentTorqueGravity;
     }
 
-    if (shoulder > +0.25)
+    // From here on, apply absolute safety limits to motor power.  This code is
+    // intentionally both simplistic and somewhat pedantic.
+
+    // Start by enforcing absolute limits on permitted motor power.
+    if (shoulder > +arm::shoulderMaxPower)
     {
-        shoulder = +0.25;
+        shoulder = +arm::shoulderMaxPower;
     }
-    if (shoulder < -0.25)
+    if (shoulder < -arm::shoulderMaxPower)
     {
-        shoulder = -0.25;
+        shoulder = -arm::shoulderMaxPower;
     }
 
-    if (elbow > +0.25)
+    if (elbow > +arm::elbowMaxPower)
     {
-        elbow = +0.25;
+        elbow = +arm::elbowMaxPower;
     }
-    if (elbow < -0.25)
+    if (elbow < -arm::elbowMaxPower)
     {
-        elbow = -0.25;
+        elbow = -arm::elbowMaxPower;
     }
 
     std::string comments;
 
-    // Shoulder exclusion zone is centered on 90 degrees.
-    if (shoulderAngle_ >= arm::shoulderNegativeStopLimit && shoulderAngle_ < 90.0_deg && shoulder < 0.0)
+    // Excluded range of angle for shoulder, centered on -90.0_deg.  The shoulder
+    // is only constrained by these limits; the elbow has further checks.
+    if (shoulder < 0.0 && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeStopLimit)
     {
         comments += " Shoulder -STOP";
         shoulder = 0.0;
     }
-    else if (shoulderAngle_ >= arm::shoulderNegativeParkLimit && shoulderAngle_ < 90.0_deg && shoulder < -arm::shoulderParkPower)
+    else if (shoulder < -arm::shoulderParkPower && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeParkLimit)
     {
         comments += " Shoulder -Park";
         shoulder = -arm::shoulderParkPower;
     }
-    else if (shoulderAngle_ >= arm::shoulderNegativeSlowLimit && shoulderAngle_ < 90.0_deg && shoulder < -arm::shoulderSlowPower)
+    else if (shoulder < -arm::shoulderSlowPower && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeSlowLimit)
     {
         comments += " Shoulder -Slow";
         shoulder = -arm::shoulderSlowPower;
     }
 
-    if (shoulderAngle_ >= 90.0_deg && shoulderAngle_ < arm::shoulderPositiveStopLimit && shoulder > 0.0)
+    if (shoulder > 0.0 && arm::shoulderPositiveStopLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
         comments += " Shoulder +STOP";
         shoulder = 0.0;
     }
-    else if (shoulderAngle_ >= 90.0_deg && shoulderAngle_ < arm::shoulderPositiveParkLimit && shoulder > arm::shoulderParkPower)
+    else if (shoulder > +arm::shoulderParkPower && arm::shoulderPositiveParkLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
         comments += " Shoulder +Park";
-        shoulder = arm::shoulderParkPower;
+        shoulder = +arm::shoulderParkPower;
     }
-    else if (shoulderAngle_ >= 90.0_deg && shoulderAngle_ < arm::shoulderPositiveSlowLimit && shoulder > arm::shoulderSlowPower)
+    else if (shoulder > +arm::shoulderSlowPower && arm::shoulderPositiveSlowLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
         comments += " Shoulder +Slow";
-        shoulder = arm::shoulderSlowPower;
+        shoulder = +arm::shoulderSlowPower;
     }
 
-    // Elbow exclusion zone is centered on 180 degrees (the natural wrap point)
-    // so no need to guard against wrap.  Because the elbow is on a virtual
-    // four-bar through the shoulder, stop the shoulder if things are getting
-    // tight.
-    if (elbowAngle_ >= arm::elbowNegativeStopLimit || elbowAngle_ < arm::elbowPositiveStopLimit)
-    {
-        comments += " Shoulder STOP";
-        shoulder = 0.0;
-    }
-
-    if (elbowAngle_ >= arm::elbowNegativeStopLimit && elbow < 0.0)
+    // Excluded range of angle for elbow, centered on 0.0_deg.  This is the first
+    // set of checks for the elbow.  Because the elbow is on a virtual four-bar
+    // linkage through the shoulder, the shoulder must also stop or slow if the elbow
+    // is in one of these zones and the shoulder is running in the direction that
+    // will make things worse.
+    if (elbow < 0.0 && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeStopLimit)
     {
         comments += " Elbow -STOP";
         elbow = 0.0;
+
+        if (shoulder < 0.0)
+        {
+            comments += " (Shoulder -STOP)";
+            shoulder = 0.0;
+        }
+        else if (shoulder < -arm::shoulderParkPower)
+        {
+            comments += " (Shoulder -PARK)";
+            shoulder = -arm::shoulderParkPower;
+        }
+        else if (shoulder < -arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder -SLOW)";
+            shoulder = -arm::shoulderSlowPower;
+        }
     }
-    else if (elbowAngle_ >= arm::elbowNegativeParkLimit && elbow < -arm::elbowParkPower)
+    else if (elbow < -arm::elbowParkPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeParkLimit)
     {
         comments += " Elbow -Park";
         elbow = -arm::elbowParkPower;
+
+        if (shoulder < -arm::shoulderParkPower)
+        {
+            comments += " (Shoulder -PARK)";
+            shoulder = -arm::shoulderParkPower;
+        }
+        else if (shoulder < -arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder -SLOW)";
+            shoulder = -arm::shoulderSlowPower;
+        }
     }
-    else if (elbowAngle_ >= arm::elbowNegativeSlowLimit && elbow < -arm::elbowSlowPower)
+    else if (elbow < -arm::elbowSlowPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeSlowLimit)
     {
         comments += " Elbow -Slow";
         elbow = -arm::elbowSlowPower;
+
+        if (shoulder < -arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder -SLOW)";
+            shoulder = -arm::shoulderSlowPower;
+        }
     }
 
-    if (elbowAngle_ < arm::elbowPositiveStopLimit && elbow > 0.0)
+    if (elbow > 0.0 && arm::elbowPositiveStopLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
         comments += " Elbow +STOP";
         elbow = 0.0;
+
+        if (shoulder > 0.0)
+        {
+            comments += " (Shoulder +STOP)";
+            shoulder = 0.0;
+        }
+        else if (shoulder > +arm::shoulderParkPower)
+        {
+            comments += " (Shoulder +PARK)";
+            shoulder = +arm::shoulderParkPower;
+        }
+        else if (shoulder > +arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder +SLOW)";
+            shoulder = +arm::shoulderSlowPower;
+        }
     }
-    else if (elbowAngle_ < arm::elbowPositiveParkLimit && elbow > arm::elbowParkPower)
+    else if (elbow > +arm::elbowParkPower && arm::elbowPositiveParkLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
         comments += " Elbow +Park";
-        elbow = arm::elbowParkPower;
+        elbow = +arm::elbowParkPower;
+
+        if (shoulder > +arm::shoulderParkPower)
+        {
+            comments += " (Shoulder +PARK)";
+            shoulder = +arm::shoulderParkPower;
+        }
+        else if (shoulder > +arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder +SLOW)";
+            shoulder = +arm::shoulderSlowPower;
+        }
     }
-    else if (elbowAngle_ < arm::elbowPositiveSlowLimit && elbow > arm::elbowSlowPower)
+    else if (elbow > +arm::elbowSlowPower && arm::elbowPositiveSlowLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
         comments += " Elbow +Slow";
-        elbow = arm::elbowSlowPower;
+        elbow = +arm::elbowSlowPower;
+
+        if (shoulder > +arm::shoulderSlowPower)
+        {
+            comments += " (Shoulder +SLOW)";
+            shoulder = +arm::shoulderSlowPower;
+        }
     }
+
+    // XXX
 
     if (print_)
     {

@@ -48,6 +48,10 @@ void ArmTest::SetShoulderAngle(units::angle::degree_t angle) noexcept
     {
         position += 4096.0;
     }
+    if (position > 4096.0)
+    {
+        position -= 4096.0;
+    }
 
     if (position < 0.0 || position > 4095.0)
     {
@@ -73,6 +77,10 @@ void ArmTest::SetElbowAngle(units::angle::degree_t angle) noexcept
     if (position < 0.0)
     {
         position += 4096.0;
+    }
+    if (position > 4096.0)
+    {
+        position -= 4096.0;
     }
 
     if (position < 0.0 || position > 4095.0)

@@ -145,7 +145,7 @@ namespace pidf
 namespace nonDrive
 {
     constexpr int kShoulderAlignmentOffset = +0;
-    constexpr int kElbowAlignmentOffset = +1024;
+    constexpr int kElbowAlignmentOffset = -1024;
 
     constexpr int kShoulderMotorCanID = 9;
     constexpr int kElbowMotorCanID = 10;
@@ -184,30 +184,34 @@ namespace arm
 
     // Proportionalities for voltages to counter gravity at different joints.
     // NEO empirical stall torque at 12V is 2.6Nm; gearbox is 256:1.
-    constexpr units::torque::newton_meter_t shoulderMaxTorque = 256.0 * 2.6_Nm;
-    constexpr units::torque::newton_meter_t elbowMaxTorque = 256.0 * 2.6_Nm;
+    constexpr units::torque::newton_meter_t shoulderMaxTorque = 250.0 * 2.6_Nm;
+    constexpr units::torque::newton_meter_t elbowMaxTorque = 250.0 * 2.6_Nm;
 
     constexpr units::length::meter_t upperArmLength = 30.0_in;
-    constexpr units::length::meter_t lowerArmLength = 28.0_in;
+    constexpr units::length::meter_t lowerArmLength = 34.625_in;
     constexpr units::mass::kilogram_t pointMass = 12.0_lb;
-
-    constexpr units::angle::degree_t shoulderNegativeStopLimit = +60.0_deg;
-    constexpr units::angle::degree_t shoulderPositiveStopLimit = +117.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeParkLimit = +58.0_deg;
-    constexpr units::angle::degree_t shoulderPositiveParkLimit = +124.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeSlowLimit = +53.0_deg;
-    constexpr units::angle::degree_t shoulderPositiveSlowLimit = +129.0_deg;
 
     constexpr double shoulderParkPower = 0.10;
     constexpr double shoulderSlowPower = 0.25;
-
-    constexpr units::angle::degree_t elbowNegativeStopLimit = +160.0_deg;
-    constexpr units::angle::degree_t elbowPositiveStopLimit = -160.0_deg;
-    constexpr units::angle::degree_t elbowNegativeParkLimit = +155.0_deg;
-    constexpr units::angle::degree_t elbowPositiveParkLimit = -155.0_deg;
-    constexpr units::angle::degree_t elbowNegativeSlowLimit = +150.0_deg;
-    constexpr units::angle::degree_t elbowPositiveSlowLimit = -150.0_deg;
+    constexpr double shoulderMaxPower = 0.25;
 
     constexpr double elbowParkPower = 0.10;
     constexpr double elbowSlowPower = 0.25;
+    constexpr double elbowMaxPower = 0.25;
+
+    // Excluded range of angle for shoulder, centered on -90.0_deg.
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveStopLimit = - -120.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveParkLimit = -125.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveSlowLimit = -130.0_deg;
+
+    // Excluded range of angle for elbow, centered on 0.0_deg.
+    constexpr units::angle::degree_t elbowNegativeStopLimit = +20.0_deg;
+    constexpr units::angle::degree_t elbowPositiveStopLimit = -20.0_deg;
+    constexpr units::angle::degree_t elbowNegativeParkLimit = +25.0_deg;
+    constexpr units::angle::degree_t elbowPositiveParkLimit = -25.0_deg;
+    constexpr units::angle::degree_t elbowNegativeSlowLimit = +30.0_deg;
+    constexpr units::angle::degree_t elbowPositiveSlowLimit = -30.0_deg;
 }
