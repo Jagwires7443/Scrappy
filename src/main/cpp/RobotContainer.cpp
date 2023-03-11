@@ -46,8 +46,8 @@ frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) 
         const auto controls = container->GetDriveTeleopControls();
 
         container->m_driveSubsystem.Drive(
-            std::get<0>(controls) * physical::kMaxDriveSpeed,
-            std::get<1>(controls) * physical::kMaxDriveSpeed,
+            std::get<0>(controls) * physical::kMaxDriveSpeed * 2.0,
+            std::get<1>(controls) * physical::kMaxDriveSpeed * 2.0,
             std::get<2>(controls) * physical::kMaxTurnRate,
             std::get<3>(controls));
       },
@@ -157,7 +157,6 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                       std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
                                                                     {})
                                                   .ToPtr());
-#endif
 
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).OnTrue(frc2::InstantCommand([&]() -> void
                                                                                                       { m_infrastructureSubsystem.Disable(); },
@@ -204,23 +203,42 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                                               { arm_.SetElbow(0.0); },
                                                                                               {&arm_})
                                                                              .ToPtr());
+#endif
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                                { arm_.OpenGrip(); },
-                                                                                                {&arm_})
-                                                                               .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                                                                   { arm_.OpenGrip(); },
+                                                                                                   {&arm_})
+                                                                                  .ToPtr());
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kBack).OnFalse(frc2::InstantCommand([&]() -> void
                                                                                                  { arm_.RelaxGrip(); },
                                                                                                  {&arm_})
                                                                                 .ToPtr());
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                                 { arm_.CloseGrip(); },
-                                                                                                 {&arm_})
-                                                                                .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                                                                    { arm_.CloseGrip(); },
+                                                                                                    {&arm_})
+                                                                                   .ToPtr());
   frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kStart).OnFalse(frc2::InstantCommand([&]() -> void
                                                                                                   { arm_.RelaxGrip(); },
                                                                                                   {&arm_})
                                                                                  .ToPtr());
+
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA)
+      .OnTrue(frc2::InstantCommand([&]() -> void
+                                   { arm_.SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit); },
+                                   {&arm_})
+                  .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetAngles(+146.3_deg, -153.3_deg); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetAngles(+150.4_deg, -142.8_deg); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
+  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).OnTrue(frc2::InstantCommand([&]() -> void
+                                                                                             { arm_.SetAngles(-130.0_deg, +20.0_deg); },
+                                                                                             {&arm_})
+                                                                            .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept

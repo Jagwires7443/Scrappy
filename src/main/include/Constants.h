@@ -144,8 +144,8 @@ namespace pidf
 
 namespace nonDrive
 {
-    constexpr int kShoulderAlignmentOffset = +0;
-    constexpr int kElbowAlignmentOffset = -1024;
+    constexpr int kShoulderAlignmentOffset = -650 + 2048;
+    constexpr int kElbowAlignmentOffset = +1794 - 2048;
 
     constexpr int kShoulderMotorCanID = 9;
     constexpr int kElbowMotorCanID = 10;
@@ -154,8 +154,8 @@ namespace nonDrive
     constexpr int kElbowEncoderPort = 4;
 
     // These are set so the motor directions match those of the corresponding sensor.
-    constexpr bool kShoulderMotorInverted = true;
-    constexpr bool kElbowMotorInverted = false;
+    constexpr bool kShoulderMotorInverted = false;
+    constexpr bool kElbowMotorInverted = true;
 
     constexpr int kGripPneuOpen = 0;
     constexpr int kGripPneuClose = 1;
@@ -167,6 +167,13 @@ namespace arm
 {
     // Acceleration of gravity (average @Earth's surface)
     constexpr units::acceleration::meters_per_second_squared_t gravity = 1.0_SG;
+
+    // Constraints to avoid violating a game rule, risking a penalties.
+    // And, don't lower gripper below an inch off the ground.
+    constexpr units::length::meter_t kMaxHorizontalExtension = 62.5_in;
+    constexpr units::length::meter_t kMinHorizontalExtension = -62.5_in;
+    constexpr units::length::meter_t kMaxVerticalExtension = 38.5_in;
+    constexpr units::length::meter_t kMinVerticalExtension = -38.5_in;
 
     constexpr units::angular_velocity::degrees_per_second_t kShoulderPositionMaxVelocity = 90.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kShoulderPositionMaxAcceleration = 900.0_deg_per_s_sq;
@@ -200,11 +207,15 @@ namespace arm
     constexpr double elbowMaxPower = 0.25;
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.
-    constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
-    constexpr units::angle::degree_t shoulderPositiveStopLimit = - -120.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
+    // XXX For now, restrict arm to forward only.
+    // constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = +120.0_deg;
+    constexpr units::angle::degree_t shoulderPositiveStopLimit = -120.0_deg;
+    // constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeParkLimit = +125.0_deg;
     constexpr units::angle::degree_t shoulderPositiveParkLimit = -125.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
+    // constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeSlowLimit = +130.0_deg;
     constexpr units::angle::degree_t shoulderPositiveSlowLimit = -130.0_deg;
 
     // Excluded range of angle for elbow, centered on 0.0_deg.

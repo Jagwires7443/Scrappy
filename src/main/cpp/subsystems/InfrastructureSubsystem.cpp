@@ -13,14 +13,15 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
     pdh_->SetSwitchableChannel(false);
 
     Enable();
-    SetLEDPattern(0);
+    SetLEDPattern(12);
 }
 
 void InfrastructureSubsystem::Periodic() noexcept {}
 
 void InfrastructureSubsystem::Enable() noexcept
 {
-    ph_->EnableAnalog(80_psi, 100_psi);
+    ph_->Disable();
+    // ph_->EnableAnalog(80_psi, 100_psi);
 }
 
 void InfrastructureSubsystem::Disable() noexcept

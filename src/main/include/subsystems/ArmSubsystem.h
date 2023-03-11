@@ -10,6 +10,7 @@
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 
+#include "Constants.h"
 #include "infrastructure/PWMAngleSensor.h"
 #include "infrastructure/ShuffleboardWidgets.h"
 #include "infrastructure/SparkMax.h"
@@ -100,6 +101,12 @@ public:
 
   void SetElbowAngle(units::angle::degree_t angle) noexcept;
 
+  void SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept
+  {
+    SetShoulderAngle(shoulderAngle);
+    SetElbowAngle(elbowAngle);
+  }
+
   void OpenGrip() noexcept;
   void CloseGrip() noexcept;
   void RelaxGrip() noexcept;
@@ -122,8 +129,8 @@ private:
   std::unique_ptr<TuningPID> shoulderPIDControllerUI_;
   std::unique_ptr<TuningPID> elbowPIDControllerUI_;
 
-  units::angle::degree_t commandedShoulderAngle_{0};
-  units::angle::degree_t commandedElbowAngle_{0};
+  units::angle::degree_t commandedShoulderAngle_{arm::shoulderPositiveStopLimit};
+  units::angle::degree_t commandedElbowAngle_{arm::elbowNegativeStopLimit};
 
   double shoulderControlUI_{0.0};
   bool shoulderResetUI_{false};
@@ -147,4 +154,5 @@ private:
 
   bool status_{false};
   bool print_{false};
+  bool test_{false};
 };
