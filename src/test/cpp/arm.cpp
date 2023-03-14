@@ -207,3 +207,26 @@ TEST_F(ArmTest, DottedCaclulations)
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
     EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle + 180.0));
 }
+
+TEST_F(ArmTest, DoPresets)
+{
+    arm_.TestPrint(); // Turn on extra arm output
+
+    SetAngles(-180.0_deg, -180.0_deg); // Up / Horizontal forward
+    arm_.Periodic();
+
+    arm_.SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit);
+    arm_.Periodic();
+
+    SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit);
+    arm_.SetAngles(+146.3_deg, -153.3_deg);
+    arm_.Periodic();
+
+    SetAngles(+146.3_deg, -153.3_deg);
+    arm_.SetAngles(+150.4_deg, -142.8_deg);
+    arm_.Periodic();
+
+    SetAngles(+150.4_deg, -142.8_deg);
+    arm_.SetAngles(-130.0_deg, +20.0_deg);
+    arm_.Periodic();
+}

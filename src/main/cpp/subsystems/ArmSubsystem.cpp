@@ -440,9 +440,6 @@ void ArmSubsystem::Periodic() noexcept
                comments.c_str());
     }
 
-    // shoulder = 0.0;
-    // elbow = 0.0;
-
     shoulderMotor_->SetVoltage(shoulder * 12.0_V);
     elbowMotor_->SetVoltage(elbow * 12.0_V);
 }
@@ -628,13 +625,13 @@ frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept
 void ArmSubsystem::OpenGrip() noexcept
 {
     // pneuGrip_->Set(frc::DoubleSolenoid::kForward);
-    motorGrip_->SetVoltage(+0.5 * 12.0_V);
+    motorGrip_->SetVoltage(+1.0 * 12.0_V);
 }
 
 void ArmSubsystem::CloseGrip() noexcept
 {
     // pneuGrip_->Set(frc::DoubleSolenoid::kReverse);
-    motorGrip_->SetVoltage(-0.5 * 12.0_V);
+    motorGrip_->SetVoltage(-1.0 * 12.0_V);
 }
 
 void ArmSubsystem::RelaxGrip() noexcept
