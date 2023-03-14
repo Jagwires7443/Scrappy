@@ -141,7 +141,7 @@ public:
   /**
    * Returns x and y components of tilt with-respect-to the horizontal plane.
    */
-  std::pair<double, double> DriveSubsystem::GetTilt() noexcept;
+  std::pair<double, double> GetTilt() noexcept;
 
   /**
    * Resets the odometry to the specified pose.
