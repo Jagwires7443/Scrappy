@@ -111,6 +111,10 @@ public:
   void CloseGrip() noexcept;
   void RelaxGrip() noexcept;
 
+  void BurnConfig() noexcept;
+
+  void ClearFaults() noexcept;
+
   frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
 private:

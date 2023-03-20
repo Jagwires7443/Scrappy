@@ -76,6 +76,7 @@ frc2::CommandPtr RobotContainer::PointCommandFactory(RobotContainer *container) 
 
 void RobotContainer::AutonomousInit() noexcept
 {
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -89,6 +90,7 @@ void RobotContainer::AutonomousInit() noexcept
 
 void RobotContainer::TeleopInit() noexcept
 {
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -336,6 +338,7 @@ void RobotContainer::TestInit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -365,9 +368,13 @@ void RobotContainer::TestExit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
+
+  // arm_.BurnConfig();
+  // m_driveSubsystem.BurnConfig();
 
   m_driveSubsystem.TestExit();
   arm_.TestExit();
@@ -383,6 +390,7 @@ void RobotContainer::DisabledInit() noexcept
 {
   frc2::CommandScheduler::GetInstance().CancelAll();
 
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();
@@ -396,6 +404,7 @@ void RobotContainer::DisabledInit() noexcept
 
 void RobotContainer::DisabledExit() noexcept
 {
+  arm_.ClearFaults();
   m_driveSubsystem.ClearFaults();
 
   m_driveSubsystem.ResetEncoders();

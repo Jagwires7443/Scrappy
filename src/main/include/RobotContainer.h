@@ -5,7 +5,7 @@
 #pragma once
 
 #include <frc/GenericHID.h>
-#include <frc/XboxController.h>
+#include <frc2/command/button/CommandXboxController.h>
 #include <frc2/command/CommandPtr.h>
 
 #include "subsystems/ArmSubsystem.h"
@@ -61,6 +61,6 @@ private:
   DriveSubsystem m_driveSubsystem;
   InfrastructureSubsystem m_infrastructureSubsystem;
 
-  frc::XboxController m_xbox{0};
+  frc2::CommandXboxController m_xbox{0};
   frc::GenericHID m_buttonBoard{1};
 };

@@ -128,11 +128,6 @@ void ArmSubsystem::Periodic() noexcept
         shoulderMotor_->Stop();
         elbowMotor_->Stop();
 
-        if (print_)
-        {
-            printf("**** Arm Sensor Fault!\n");
-        }
-
         status_ = false;
 
         return;
@@ -568,11 +563,17 @@ void ArmSubsystem::TestInit() noexcept
                        .WithWidget(frc::BuiltInWidgets::kPIDController);
 
     test_ = true;
+
+    shoulderMotor_->SetIdleMode(SmartMotorBase::IdleMode::kCoast);
+    elbowMotor_->SetIdleMode(SmartMotorBase::IdleMode::kCoast);
 }
 
 void ArmSubsystem::TestExit() noexcept
 {
     test_ = false;
+
+    shoulderMotor_->SetIdleMode(SmartMotorBase::IdleMode::kBrake);
+    elbowMotor_->SetIdleMode(SmartMotorBase::IdleMode::kBrake);
 }
 
 void ArmSubsystem::TestPeriodic() noexcept
@@ -614,6 +615,18 @@ void ArmSubsystem::TestPeriodic() noexcept
 void ArmSubsystem::DisabledInit() noexcept {}
 
 void ArmSubsystem::DisabledExit() noexcept {}
+
+void ArmSubsystem::BurnConfig() noexcept
+{
+    shoulderMotor_->ApplyConfig(true);
+    elbowMotor_->ApplyConfig(true);
+}
+
+void ArmSubsystem::ClearFaults() noexcept
+{
+    shoulderMotor_->ClearFaults();
+    elbowMotor_->ClearFaults();
+}
 
 frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept
 {
