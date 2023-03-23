@@ -74,6 +74,22 @@ frc2::CommandPtr RobotContainer::PointCommandFactory(RobotContainer *container) 
       driveRequirements)};
 }
 
+frc2::CommandPtr RobotContainer::ArmCommandFactory(RobotContainer *container) noexcept
+{
+  // Set up default drive command; non-owning pointer is passed by value.
+  auto armRequirements = {dynamic_cast<frc2::Subsystem *>(&container->arm_)};
+
+  // Point swerve modules, but do not actually drive.
+  return frc2::CommandPtr{std::make_unique<frc2::RunCommand>(
+      [container]() -> void
+      {
+        const auto controls = container->GetDriveTeleopControls();
+
+        container->arm_.IncrementXY(std::get<0>(controls) * 6.0_in, std::get<1>(controls) * 6.0_in);
+      },
+      armRequirements)};
+}
+
 void RobotContainer::AutonomousInit() noexcept
 {
   arm_.ClearFaults();
@@ -86,6 +102,7 @@ void RobotContainer::AutonomousInit() noexcept
 
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void {},
                                                                {&m_infrastructureSubsystem}));
+  m_infrastructureSubsystem.SetNumberLights(true);
 }
 
 void RobotContainer::TeleopInit() noexcept
@@ -100,6 +117,7 @@ void RobotContainer::TeleopInit() noexcept
   m_infrastructureSubsystem.SetDefaultCommand(frc2::RunCommand([&]() -> void
                                                                { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
                                                                {&m_infrastructureSubsystem}));
+  m_infrastructureSubsystem.SetNumberLights(true);
 }
 
 void RobotContainer::ConfigureBindings() noexcept
@@ -171,6 +189,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                                                                       .ToPtr());
 #endif
 
+#if 0
   m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
                                          { arm_.SetShoulder(+0.25); },
                                          {&arm_})
@@ -206,6 +225,7 @@ void RobotContainer::ConfigureBindings() noexcept
                                           { arm_.SetElbow(0.0); },
                                           {&arm_})
                          .ToPtr());
+#endif
 
 #if 0
   m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
@@ -226,6 +246,23 @@ void RobotContainer::ConfigureBindings() noexcept
                         .ToPtr());
 #endif
 
+  m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { arm_.SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit); },
+                                         {&arm_})
+                        .ToPtr());
+  m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { arm_.SetXY(25.0_in, 25.0_in, true); },
+                                         {&arm_})
+                        .ToPtr());
+  m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { arm_.SetXY(25.0_in, 25.0_in, false); },
+                                         {&arm_})
+                        .ToPtr());
+  m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { arm_.SetXY(-25.0_in, 25.0_in, true); },
+                                         {&arm_})
+                        .ToPtr());
+
   m_xbox.Back().WhileTrue(frc2::InstantCommand([&]() -> void
                                                { arm_.OpenGrip(); },
                                                {&arm_})
@@ -242,6 +279,26 @@ void RobotContainer::ConfigureBindings() noexcept
                                               { arm_.RelaxGrip(); },
                                               {&arm_})
                              .ToPtr());
+
+  frc2::POVButton(&m_xbox, 90).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                              { arm_.IncrementXY(+0.0_in, +6.0_in); },
+                                                              {&arm_})
+                                             .ToPtr());
+
+  frc2::POVButton(&m_xbox, 270).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                               { arm_.IncrementXY(+0.0_in, -6.0_in); },
+                                                               {&arm_})
+                                              .ToPtr());
+
+  frc2::POVButton(&m_xbox, 0).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                             { arm_.IncrementXY(+6.0_in, +0.0_in); },
+                                                             {&arm_})
+                                            .ToPtr());
+
+  frc2::POVButton(&m_xbox, 180).WhileTrue(frc2::InstantCommand([&]() -> void
+                                                               { arm_.IncrementXY(-6.0_in, +0.0_in); },
+                                                               {&arm_})
+                                              .ToPtr());
 }
 
 std::optional<frc2::CommandPtr> RobotContainer::GetAutonomousCommand() noexcept
@@ -363,6 +420,8 @@ void RobotContainer::TestInit() noexcept
   chooser->AddOption("Spin", std::bind(SpinCommand::SpinCommandFactory, &m_driveSubsystem));
 
   frc2::CommandScheduler::GetInstance().Enable();
+
+  m_infrastructureSubsystem.SetNumberLights(true);
 }
 
 void RobotContainer::TestExit() noexcept
@@ -401,6 +460,8 @@ void RobotContainer::DisabledInit() noexcept
 
   m_driveSubsystem.DisabledInit();
   arm_.DisabledInit();
+
+  m_infrastructureSubsystem.SetNumberLights(false);
 }
 
 void RobotContainer::DisabledExit() noexcept

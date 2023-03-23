@@ -146,8 +146,6 @@ void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
 
     commandedShoulderAngle_ = angle;
     shoulderPIDController_->SetGoal(rotatedAngle);
-
-    /* XXX */ printf("Shoulder Goal: %lf -> %lf\n", angle.value(), rotatedAngle.value());
 }
 
 void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
@@ -165,8 +163,6 @@ void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
 
     commandedElbowAngle_ = angle;
     elbowPIDController_->SetGoal(rotatedAngle);
-
-    /* XXX */ printf("Elbow Goal: %lf -> %lf\n", angle.value(), rotatedAngle.value());
 }
 
 void ArmSubsystem::Periodic() noexcept
@@ -225,8 +221,8 @@ void ArmSubsystem::Periodic() noexcept
     // the inversion settings of the motors.  Transforms are performed from these
     // coordinate systems.  Start by getting (X, Y) coordinates of the elbow.
 
-    elbowX_ = arm::upperArmLength * sin(units::angle::radian_t{shoulderAngle_}.value());
-    elbowY_ = arm::upperArmLength * cos(units::angle::radian_t{shoulderAngle_}.value());
+    elbowX_ = arm::upperArmLength * cos(units::angle::radian_t{shoulderAngle_}.value());
+    elbowY_ = arm::upperArmLength * sin(units::angle::radian_t{shoulderAngle_}.value());
 
     // Work out the third side of the triangle formed by the upper and lower arms
     // and transform this into the robot/shoulder coordinate system.  Specifically,
@@ -268,8 +264,8 @@ void ArmSubsystem::Periodic() noexcept
     // of the shoulder.
     dottedAngle_ = shoulderAngle_ + units::angle::radian_t{acos(imprecision)};
 
-    gripperX_ = dottedLength_ * sin(units::angle::radian_t{dottedAngle_}.value());
-    gripperY_ = dottedLength_ * cos(units::angle::radian_t{dottedAngle_}.value());
+    gripperX_ = dottedLength_ * cos(units::angle::radian_t{dottedAngle_}.value());
+    gripperY_ = dottedLength_ * sin(units::angle::radian_t{dottedAngle_}.value());
 
     shoulderAngleGyro_.Set(shoulderAngle_.value());
     elbowAngleGyro_.Set(elbowAngle_.value());
@@ -299,9 +295,6 @@ void ArmSubsystem::Periodic() noexcept
 
     double shoulder = shoulderPIDController_->Calculate(rotatedShoulderAngle);
     double elbow = elbowPIDController_->Calculate(rotatedElbowAngle);
-
-    /* XXX */ printf("Shoulder Calc: %lf -> %lf\n", shoulderAngle_.value(), rotatedShoulderAngle.value());
-    /* XXX */ printf("Elbow Calc: %lf -> %lf\n", elbowAngle_.value(), rotatedElbowAngle.value());
 
     shoulderPower_ = shoulder;
     elbowPower_ = elbow;
@@ -414,14 +407,17 @@ void ArmSubsystem::Periodic() noexcept
     // linkage through the shoulder, the shoulder must also stop or slow if the elbow
     // is in one of these zones and the shoulder is running in the direction that
     // will make things worse.
-    if (elbow < 0.0 && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeStopLimit)
+    if ((elbow < 0.0 || shoulder > 0.0) && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeStopLimit)
     {
-        notes += " Elbow -STOP";
-        elbow = 0.0;
-
-        if (shoulder < 0.0)
+        if (elbow < 0.0)
         {
-            notes += " (Shoulder -STOP)";
+            notes += " Elbow -STOP";
+            elbow = 0.0;
+        }
+
+        if (shoulder > 0.0)
+        {
+            notes += " (Shoulder +STOP)";
             shoulder = 0.0;
         }
     }
@@ -430,50 +426,16 @@ void ArmSubsystem::Periodic() noexcept
         notes += " Elbow -Park";
         elbow = -arm::elbowParkPower;
 
-        if (shoulder < -arm::shoulderParkPower)
-        {
-            notes += " (Shoulder -PARK)";
-            shoulder = -arm::shoulderParkPower;
-        }
-    }
-    else if (elbow < -arm::elbowSlowPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeSlowLimit)
-    {
-        notes += " Elbow -Slow";
-        elbow = -arm::elbowSlowPower;
-
-        if (shoulder < -arm::shoulderSlowPower)
-        {
-            notes += " (Shoulder -SLOW)";
-            shoulder = -arm::shoulderSlowPower;
-        }
-    }
-
-    if (elbow > 0.0 && arm::elbowPositiveStopLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
-    {
-        notes += " Elbow +STOP";
-        elbow = 0.0;
-
-        if (shoulder > 0.0)
-        {
-            notes += " (Shoulder +STOP)";
-            shoulder = 0.0;
-        }
-    }
-    else if (elbow > +arm::elbowParkPower && arm::elbowPositiveParkLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
-    {
-        notes += " Elbow +Park";
-        elbow = +arm::elbowParkPower;
-
         if (shoulder > +arm::shoulderParkPower)
         {
             notes += " (Shoulder +PARK)";
             shoulder = +arm::shoulderParkPower;
         }
     }
-    else if (elbow > +arm::elbowSlowPower && arm::elbowPositiveSlowLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
+    else if (elbow < -arm::elbowSlowPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeSlowLimit)
     {
-        notes += " Elbow +Slow";
-        elbow = +arm::elbowSlowPower;
+        notes += " Elbow -Slow";
+        elbow = -arm::elbowSlowPower;
 
         if (shoulder > +arm::shoulderSlowPower)
         {
@@ -482,10 +444,46 @@ void ArmSubsystem::Periodic() noexcept
         }
     }
 
+    if ((elbow > 0.0 || shoulder < 0.0) && arm::elbowPositiveStopLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
+    {
+        if (elbow > 0.0)
+        {
+            notes += " Elbow +STOP";
+            elbow = 0.0;
+        }
+
+        if (shoulder < 0.0)
+        {
+            notes += " (Shoulder -STOP)";
+            shoulder = 0.0;
+        }
+    }
+    else if (elbow > +arm::elbowParkPower && arm::elbowPositiveParkLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
+    {
+        notes += " Elbow +Park";
+        elbow = +arm::elbowParkPower;
+
+        if (shoulder < -arm::shoulderParkPower)
+        {
+            notes += " (Shoulder -PARK)";
+            shoulder = -arm::shoulderParkPower;
+        }
+    }
+    else if (elbow > +arm::elbowSlowPower && arm::elbowPositiveSlowLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
+    {
+        notes += " Elbow +Slow";
+        elbow = +arm::elbowSlowPower;
+
+        if (shoulder < -arm::shoulderSlowPower)
+        {
+            notes += " (Shoulder -SLOW)";
+            shoulder = -arm::shoulderSlowPower;
+        }
+    }
+
     notes_ = notes;
 
-    // XXX
-    if (print_ || test_)
+    if (print_ || test_) // XXX remove "test_"
     {
         printf(
             "**** Arm Status: SA=%lf EA=%lf DL=%lf DA=%lf EX=%lf EY=%lf GX=%lf GY=%lf S%%=%lf E%%=%lf "
@@ -791,6 +789,83 @@ void ArmSubsystem::TestPeriodic() noexcept
     armCommentsUI_->GetEntry()->SetString(notes_);
 
     Periodic();
+}
+
+void ArmSubsystem::SetXY(units::length::meter_t x, units::length::meter_t y, bool positiveElbowAngle) noexcept
+{
+    units::length::meter_t radius = units::length::meter_t{std::hypot(x.value(), y.value())};
+
+    // Can't exceed reach of the arm!
+    if (radius > arm::upperArmLength + arm::lowerArmLength)
+    {
+        return;
+    }
+
+    // This is the angle needed for the straight line from the origin through the
+    // gripper.
+    units::angle::degree_t dottedAngle = units::angle::radian_t{atan2(x.value(), y.value())};
+
+    // Now, find the elbow angle necessary to place the gripper at this radius...
+    // Law of cosines: angle_c = arc_cos((a^2 + b^2 - c^2) / (2*a*b))
+    double imprecision =
+        (pow(units::length::meter_t{arm::upperArmLength}.value(), 2) +
+         pow(units::length::meter_t{arm::lowerArmLength}.value(), 2) -
+         pow(units::length::meter_t{radius}.value(), 2)) /
+        (2.0 * units::length::meter_t{arm::upperArmLength}.value() *
+         units::length::meter_t{arm::lowerArmLength}.value());
+
+    // A bit of defensive logic, in case of slight imprecision in calculations.
+    if (imprecision > +1.0)
+    {
+        imprecision = +1.0;
+    }
+    if (imprecision < -1.0)
+    {
+        imprecision = -1.0;
+    }
+
+    // This is always in the range [0.0_deg, 180.0_deg], so need to choose either
+    // positive or negative value -- in other words, desired direction of elbow bend.
+    // This will be done later...  Use positive value for remaining calculations.
+    units::angle::degree_t elbowAngle = units::angle::radian_t{acos(imprecision)};
+
+    // Now find the angle of the triangle formed by origin, elbow, and gripper,
+    // which has it's vertex at the origin.
+    // Law of cosines: angle_b = arc_cos((a^2 + c^2 - b^2) / (2*a*c))
+    imprecision =
+        (pow(units::length::meter_t{arm::upperArmLength}.value(), 2) +
+         pow(units::length::meter_t{radius}.value(), 2) -
+         pow(units::length::meter_t{arm::lowerArmLength}.value(), 2)) /
+        (2.0 * units::length::meter_t{arm::upperArmLength}.value() *
+         units::length::meter_t{radius}.value());
+
+    // A bit of defensive logic, in case of slight imprecision in calculations.
+    if (imprecision > +1.0)
+    {
+        imprecision = +1.0;
+    }
+    if (imprecision < -1.0)
+    {
+        imprecision = -1.0;
+    }
+
+    units::angle::degree_t shoulderOffsetAngle = units::angle::radian_t{acos(imprecision)};
+
+    // Now, the desired elbow angle is +/-elbowAngle, and the desired shoulderAngle
+    // is dottedAngle +/- shoulderOffsetAngle.
+    if (positiveElbowAngle)
+    {
+        SetAngles(dottedAngle + shoulderOffsetAngle, +elbowAngle);
+    }
+    else
+    {
+        SetAngles(dottedAngle - shoulderOffsetAngle, -elbowAngle);
+    }
+}
+
+void ArmSubsystem::IncrementXY(units::length::meter_t x, units::length::meter_t y) noexcept
+{
+    SetXY(gripperX_ + x, gripperY_ + y, elbowAngle_ >= 0.0_deg);
 }
 
 void ArmSubsystem::DisabledInit() noexcept {}

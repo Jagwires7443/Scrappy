@@ -44,6 +44,7 @@ public:
 private:
   static frc2::CommandPtr DriveCommandFactory(RobotContainer *container) noexcept;
   static frc2::CommandPtr PointCommandFactory(RobotContainer *container) noexcept;
+  static frc2::CommandPtr ArmCommandFactory(RobotContainer *container) noexcept;
 
   std::tuple<double, double, double, bool> GetDriveTeleopControls() noexcept;
 

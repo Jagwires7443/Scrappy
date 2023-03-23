@@ -115,6 +115,16 @@ public:
     SetElbowAngle(elbowAngle);
   }
 
+  // Coordinate system is viewed looking at the robot's left side; origin is at
+  // shoulder joint; positive X-axis is horizontal and to the right; positive
+  // Y-axis is vertical and up.  Sets desired position to these coordinates, if
+  // possible -- if not, simply returns.
+  void SetXY(units::length::meter_t x, units::length::meter_t y, bool positiveElbowAngle) noexcept;
+
+  // Given current coordinates of (X, Y), sets desirted position to
+  // (X + X-increment, Y + Y-increment), if possible -- if not, simply returns.
+  void IncrementXY(units::length::meter_t x, units::length::meter_t y) noexcept;
+
   void OpenGrip() noexcept;
   void CloseGrip() noexcept;
   void RelaxGrip() noexcept;

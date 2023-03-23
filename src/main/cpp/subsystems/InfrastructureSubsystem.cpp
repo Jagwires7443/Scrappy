@@ -14,6 +14,7 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
 
     Enable();
     SetLEDPattern(12);
+    SetNumberLights(false);
 }
 
 void InfrastructureSubsystem::Periodic() noexcept {}

@@ -196,24 +196,24 @@ namespace arm
     constexpr units::torque::newton_meter_t elbowMaxTorque = 250.0 * 2.6_Nm;
 
     constexpr units::length::meter_t upperArmLength = 30.0_in;
-    constexpr units::length::meter_t lowerArmLength = 34.625_in;
-    constexpr units::mass::kilogram_t pointMass = 12.0_lb;
+    constexpr units::length::meter_t lowerArmLength = 30.0_in;
+    constexpr units::mass::kilogram_t pointMass = 2.0_lb;
 
     constexpr double shoulderParkPower = 0.10;
     constexpr double shoulderSlowPower = 0.25;
-    constexpr double shoulderMaxPower = 0.25;
+    constexpr double shoulderMaxPower = 0.30;
 
     constexpr double elbowParkPower = 0.10;
     constexpr double elbowSlowPower = 0.25;
-    constexpr double elbowMaxPower = 0.25;
+    constexpr double elbowMaxPower = 0.30;
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.
     // XXX For now, restrict arm to forward only.
-    constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = -58.0_deg;
     constexpr units::angle::degree_t shoulderPositiveStopLimit = -120.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeParkLimit = -53.0_deg;
     constexpr units::angle::degree_t shoulderPositiveParkLimit = -125.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeSlowLimit = -48.0_deg;
     constexpr units::angle::degree_t shoulderPositiveSlowLimit = -130.0_deg;
 
     // Excluded range of angle for elbow, centered on 0.0_deg.
