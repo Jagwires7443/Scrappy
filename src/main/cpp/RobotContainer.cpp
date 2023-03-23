@@ -123,70 +123,70 @@ void RobotContainer::TeleopInit() noexcept
 void RobotContainer::ConfigureBindings() noexcept
 {
 #if 0
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kA).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                             { m_slow = true; },
-                                                                                             {})
-                                                                            .ToPtr());
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kB).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                             { m_slow = false; },
-                                                                                             {})
-                                                                            .ToPtr());
+  m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_slow = true; },
+                                         {})
+                        .ToPtr());
+  m_xbox.B().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_slow = false; },
+                                         {})
+                        .ToPtr());
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kX).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                             { m_fieldOriented = false; },
-                                                                                             {})
-                                                                            .ToPtr());
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kY).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                             { m_driveSubsystem.ZeroHeading();
-                                                                                            m_fieldOriented = true; },
-                                                                                             {&m_driveSubsystem})
-                                                                            .ToPtr());
+  m_xbox.X().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_fieldOriented = false; },
+                                         {})
+                        .ToPtr());
+  m_xbox.Y().OnTrue(frc2::InstantCommand([&]() -> void
+                                         { m_driveSubsystem.ZeroHeading();
+                                           m_fieldOriented = true; },
+                                         {&m_driveSubsystem})
+                        .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 5).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_shooterVelocity = -500.0; },
-                                                                      {})
-                                                     .ToPtr());
+  m_buttonBoard.Button(5).OnTrue(frc2::InstantCommand([&]() -> void
+                                                      { m_shooterVelocity = -500.0; },
+                                                      {})
+                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_lock = true; },
-                                                                      {})
-                                                     .ToPtr());
+  m_buttonBoard.Button(6).OnTrue(frc2::InstantCommand([&]() -> void
+                                                      { m_lock = true; },
+                                                      {})
+                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 6).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { m_lock = false; },
-                                                                      {})
-                                                     .ToPtr());
+  m_buttonBoard.Button(8).OnTrue(frc2::InstantCommand([&]() -> void
+                                                      { m_lock = false; },
+                                                      {})
+                                     .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 10).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 1320.0; },
-                                                                       {})
-                                                      .ToPtr());
+  m_buttonBoard.Button(10).OnTrue(frc2::InstantCommand([&]() -> void
+                                                       { m_shooterVelocity = 1320.0; },
+                                                       {})
+                                      .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 11).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 930.0; },
-                                                                       {})
-                                                      .ToPtr());
+  m_buttonBoard.Button(11).OnTrue(frc2::InstantCommand([&]() -> void
+                                                       { m_shooterVelocity = 930.0; },
+                                                       {})
+                                      .ToPtr());
 
-  frc2::JoystickButton(&m_buttonBoard, 12).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                       { m_shooterVelocity = 400.0; },
-                                                                       {})
-                                                      .ToPtr());
-  frc2::JoystickButton(&m_buttonBoard, 7).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                      { ++m_LEDPattern;
+  m_buttonBoard.Button(12).OnTrue(frc2::InstantCommand([&]() -> void
+                                                       { m_shooterVelocity = 400.0; },
+                                                       {})
+                                      .ToPtr());
+  m_buttonBoard.Button(7).OnTrue(frc2::InstantCommand([&]() -> void
+                                                      { ++m_LEDPattern;
                                                                       if (m_LEDPattern >= m_LEDPatternCount) { m_LEDPattern = 0; }
                                                                       std::printf("LED Pattern[%u]: %s\n", m_LEDPattern, std::string(m_infrastructureSubsystem.GetLEDPatternDescription(m_LEDPattern)).c_str()); },
-                                                                    {})
-                                                  .ToPtr());
+                                                      {})
+                                     .ToPtr());
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kLeftBumper).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                                      { m_infrastructureSubsystem.Disable(); },
-                                                                                                      {&m_infrastructureSubsystem})
-                                                                                     .ToPtr());
+  m_xbox.LeftBumper().OnTrue(frc2::InstantCommand([&]() -> void
+                                                  { m_infrastructureSubsystem.Disable(); },
+                                                  {&m_infrastructureSubsystem})
+                                 .ToPtr());
 
-  frc2::JoystickButton(&m_xbox, frc::XboxController::Button::kRightBumper).OnTrue(frc2::InstantCommand([&]() -> void
-                                                                                                       { m_infrastructureSubsystem.Enable(); },
-                                                                                                       {&m_infrastructureSubsystem})
-                                                                                      .ToPtr());
+  m_xbox.RightBumper().OnTrue(frc2::InstantCommand([&]() -> void
+                                                   { m_infrastructureSubsystem.Enable(); },
+                                                   {&m_infrastructureSubsystem})
+                                  .ToPtr());
 #endif
 
 #if 0
