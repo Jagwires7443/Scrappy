@@ -71,6 +71,16 @@ public:
     return gripperY_;
   }
 
+  units::length::meter_t GetTargetX() noexcept
+  {
+    return targetX_;
+  }
+
+  units::length::meter_t GetTargetY() noexcept
+  {
+    return targetY_;
+  }
+
   units::length::meter_t GetDottedLength() noexcept
   {
     return dottedLength_;
@@ -171,6 +181,9 @@ private:
 
   units::length::meter_t gripperX_{0.0_m};
   units::length::meter_t gripperY_{0.0_m};
+
+  units::length::meter_t targetX_{0.0_m};
+  units::length::meter_t targetY_{0.0_m};
 
   units::length::meter_t dottedLength_{0.0_m};
   units::angle::degree_t dottedAngle_{0.0_deg};

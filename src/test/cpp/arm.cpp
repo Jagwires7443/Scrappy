@@ -24,6 +24,7 @@ protected:
     void SetElbowAngle(units::angle::degree_t angle) noexcept;
 
     void SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept;
+    void Park() noexcept { SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit); }
     bool CheckData(std::string_view tag) noexcept;
 
     ArmSubsystem arm_;
@@ -244,4 +245,17 @@ TEST_F(ArmTest, SlowParkStop)
     arm_.SetAngles(-70.0_deg, -180.0_deg); // Command arm further into stop zone
     arm_.Periodic();
     EXPECT_THAT(arm_.TestNotes(), EndsWith(" Shoulder -STOP"));
+}
+
+TEST_F(ArmTest, XY)
+{
+    Park();
+    arm_.Reset();
+    arm_.TestPrint(); // Turn on extra arm output
+
+    arm_.SetXY(1.0_m, 0.0_m, true);
+    arm_.Periodic();
+
+    arm_.IncrementXY(0.1_m, 0.0_m);
+    arm_.Periodic();
 }

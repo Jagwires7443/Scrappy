@@ -793,6 +793,9 @@ void ArmSubsystem::TestPeriodic() noexcept
 
 void ArmSubsystem::SetXY(units::length::meter_t x, units::length::meter_t y, bool positiveElbowAngle) noexcept
 {
+    targetX_ = x;
+    targetY_ = y;
+
     units::length::meter_t radius = units::length::meter_t{std::hypot(x.value(), y.value())};
 
     // Can't exceed reach of the arm!
@@ -865,7 +868,10 @@ void ArmSubsystem::SetXY(units::length::meter_t x, units::length::meter_t y, boo
 
 void ArmSubsystem::IncrementXY(units::length::meter_t x, units::length::meter_t y) noexcept
 {
-    SetXY(gripperX_ + x, gripperY_ + y, elbowAngle_ >= 0.0_deg);
+    targetX_ += x;
+    targetY_ += y;
+
+    SetXY(targetX_, targetY_, elbowAngle_ >= 0.0_deg);
 }
 
 void ArmSubsystem::DisabledInit() noexcept {}
