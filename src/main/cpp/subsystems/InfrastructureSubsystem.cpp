@@ -162,3 +162,8 @@ void InfrastructureSubsystem::SetLEDPattern(uint32_t pattern) noexcept
 
     leds_->Set(LEDPatterns[pattern].first);
 }
+
+void InfrastructureSubsystem::SetNumberLights(bool on) noexcept
+{
+    pdh_->SetSwitchableChannel(on);
+}

@@ -1,4 +1,6 @@
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <gtest/gtest-matchers.h>
 
 #include <frc/simulation/DutyCycleSim.h>
 
@@ -9,6 +11,7 @@
 #include <string_view>
 
 using frc::sim::DutyCycleSim;
+using ::testing::EndsWith;
 
 class ArmTest : public testing::Test
 {
@@ -25,8 +28,8 @@ protected:
 
     ArmSubsystem arm_;
 
-    DutyCycleSim simShoulderSensor = DutyCycleSim::CreateForChannel(nonDrive::kShoulderEncoderPort);
-    DutyCycleSim simElbowSensor = DutyCycleSim::CreateForChannel(nonDrive::kElbowEncoderPort);
+    DutyCycleSim simShoulderSensor_ = DutyCycleSim::CreateForChannel(nonDrive::kShoulderEncoderPort);
+    DutyCycleSim simElbowSensor_ = DutyCycleSim::CreateForChannel(nonDrive::kElbowEncoderPort);
 
     units::angle::degree_t shoulderAngle_{0.0_deg};
     units::angle::degree_t elbowAngle_{0.0_deg};
@@ -62,8 +65,8 @@ void ArmTest::SetShoulderAngle(units::angle::degree_t angle) noexcept
 
     position += 1.0;
 
-    simShoulderSensor.SetFrequency(976);
-    simShoulderSensor.SetOutput(position / 1025.0);
+    simShoulderSensor_.SetFrequency(976);
+    simShoulderSensor_.SetOutput(position / 1025.0);
 }
 
 void ArmTest::SetElbowAngle(units::angle::degree_t angle) noexcept
@@ -92,8 +95,8 @@ void ArmTest::SetElbowAngle(units::angle::degree_t angle) noexcept
 
     position += 1.0;
 
-    simElbowSensor.SetFrequency(976);
-    simElbowSensor.SetOutput(position / 1025.0);
+    simElbowSensor_.SetFrequency(976);
+    simElbowSensor_.SetOutput(position / 1025.0);
 }
 
 void ArmTest::SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept
@@ -134,29 +137,25 @@ bool ArmTest::CheckData(std::string_view tag) noexcept
 // Ensure the mock sensors are behaving as expected (for both PWM and angle).
 TEST_F(ArmTest, SensorsFaked)
 {
-    return; // XXX
-
     SetAngles(0.0_deg, 0.0_deg);
     arm_.Periodic();
-    EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value()));
-    EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value()));
+    EXPECT_GT(0.5, fabs(arm_.GetShoulderAngle().value()));
+    EXPECT_GT(0.5, fabs(arm_.GetElbowAngle().value()));
 
     SetAngles(-180.0_deg, -180.0_deg);
     arm_.Periodic();
-    EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value() + 180.0));
-    EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value() + 180.0));
+    EXPECT_GT(0.5, fabs(arm_.GetShoulderAngle().value() + 180.0));
+    EXPECT_GT(0.5, fabs(arm_.GetElbowAngle().value() + 180.0));
 
     SetAngles(+179.6484375_deg, +179.6484375_deg);
     arm_.Periodic();
-    EXPECT_GT(0.275, fabs(arm_.GetShoulderAngle().value() - 180.0));
-    EXPECT_GT(0.275, fabs(arm_.GetElbowAngle().value() - 180.0));
+    EXPECT_GT(0.5, fabs(arm_.GetShoulderAngle().value() + 180.0));
+    EXPECT_GT(0.5, fabs(arm_.GetElbowAngle().value() + 180.0));
 }
 
 // Ensure the math is working for the third side of the arm triangle.
 TEST_F(ArmTest, DottedCaclulations)
 {
-    return; // XXX
-
     arm_.TestPrint(); // Turn on extra arm output
 
     double expectedLength{0.0};
@@ -164,11 +163,10 @@ TEST_F(ArmTest, DottedCaclulations)
 
     SetAngles(0.0_deg, -180.0_deg); // Horizontal rearward / Straight
     arm_.Periodic();
-    // XXX use hypot(); do two-step x,y conversion...
     expectedLength = units::length::meter_t{arm::upperArmLength + arm::lowerArmLength}.value();
     expectedAngle = 0.0;
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.75, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
     // Right triangles are a special case, ensure math is correct in these cases.
 
@@ -183,14 +181,14 @@ TEST_F(ArmTest, DottedCaclulations)
             acos(units::length::meter_t{arm::upperArmLength}.value() / expectedLength)}}
                         .value();
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.75, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
     SetAngles(0.0_deg, +90.0_deg); // Horizontal forward / Down
     arm_.Periodic();
     // expectedLength and expectedAngle are unchanged from prior case, direction is
     // reversed
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle));
+    EXPECT_GT(0.75, fabs(arm_.GetDottedAngle().value() - expectedAngle));
 
     // Now, rotate shoulder and verify that dotted angle is in the robot coordinate
     // system.
@@ -199,13 +197,13 @@ TEST_F(ArmTest, DottedCaclulations)
     arm_.Periodic();
     // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle + 90.0));
+    EXPECT_GT(0.75, fabs(arm_.GetDottedAngle().value() - expectedAngle + 90.0));
 
     SetAngles(-180.0_deg, +90.0_deg); // Horizontal backward / Up
     arm_.Periodic();
     // expectedLength is unchanged from prior case; expectedAngle is rotated 90 deg
     EXPECT_GT(0.01, fabs(arm_.GetDottedLength().value() - expectedLength));
-    EXPECT_GT(0.35, fabs(arm_.GetDottedAngle().value() - expectedAngle + 180.0));
+    EXPECT_GT(0.75, fabs(arm_.GetDottedAngle().value() - expectedAngle + 180.0));
 }
 
 TEST_F(ArmTest, DoPresets)
@@ -229,4 +227,21 @@ TEST_F(ArmTest, DoPresets)
     SetAngles(+150.4_deg, -142.8_deg);
     arm_.SetAngles(-130.0_deg, +20.0_deg);
     arm_.Periodic();
+}
+
+TEST_F(ArmTest, SlowParkStop)
+{
+    arm_.TestPrint(); // Turn on extra arm output
+
+    SetAngles(-118.0_deg, -180.0_deg); // Sensors place shoulder in stop zone; elbow straight
+    arm_.Reset();
+    arm_.SetAngles(-110.0_deg, -180.0_deg); // Command arm further into stop zone
+    arm_.Periodic();
+    EXPECT_THAT(arm_.TestNotes(), EndsWith(" Shoulder +STOP"));
+
+    SetAngles(-62.0_deg, -180.0_deg); // Sensors place shoulder in stop zone; elbow straight
+    arm_.Reset();
+    arm_.SetAngles(-70.0_deg, -180.0_deg); // Command arm further into stop zone
+    arm_.Periodic();
+    EXPECT_THAT(arm_.TestNotes(), EndsWith(" Shoulder -STOP"));
 }

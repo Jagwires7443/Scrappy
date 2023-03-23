@@ -43,8 +43,9 @@ ArmSubsystem::ArmSubsystem() noexcept
     });
     elbowMotor_->ApplyConfig(false);
 
-    pneuGrip_ = std::make_unique<frc::DoubleSolenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kGripPneuOpen, nonDrive::kGripPneuClose);
-    motorGrip_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kGripMotorCanID);
+    pneumaticGrip_ = std::make_unique<frc::DoubleSolenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kGripPneuOpen, nonDrive::kGripPneuClose);
+    suctionMotorsOne_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsOneCanID);
+    suctionMotorsTwo_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsTwoCanID);
 
     // Note that these controllers will avoid wrapping at [-180.0_deg, +180.0_deg).
     // For the shoulder, must avoid -90.0_deg; for the elbow, must avoid 0.0_deg.
@@ -72,12 +73,64 @@ ArmSubsystem::ArmSubsystem() noexcept
     elbowPIDController_->DisableContinuousInput();
     elbowPIDController_->SetTolerance(arm::kElbowTolerance);
 
-    // Ensure arm initially seeks parked position (otherwise, it would seek
-    // zero shoulder, zero elbow).
-    SetShoulderAngle(commandedShoulderAngle_);
-    SetElbowAngle(commandedElbowAngle_);
+    Reset();
 }
 
+void ArmSubsystem::Reset() noexcept
+{
+    const auto shoulderSensor = shoulderSensor_->GetAbsolutePosition();
+    const auto elbowSensor = elbowSensor_->GetAbsolutePosition();
+
+    // If there is no valid reading from either sensor, stop everything and bail!
+    if (shoulderSensor)
+    {
+        shoulderAngle_ = shoulderSensor.value();
+    }
+    else
+    {
+        shoulderAngle_ = arm::shoulderPositiveStopLimit;
+    }
+    if (elbowSensor)
+    {
+        elbowAngle_ = elbowSensor.value();
+    }
+    else
+    {
+        elbowAngle_ = arm::elbowNegativeStopLimit;
+    }
+
+    units::angle::degree_t rotatedShoulderAngle = shoulderAngle_ - 90.0_deg;
+    units::angle::degree_t rotatedElbowAngle = elbowAngle_ + 180.0_deg;
+
+    while (rotatedShoulderAngle >= +180.0_deg)
+    {
+        rotatedShoulderAngle -= 360.0_deg;
+    }
+    while (rotatedShoulderAngle < -180.0_deg)
+    {
+        rotatedShoulderAngle += 360.0_deg;
+    }
+
+    while (rotatedElbowAngle >= +180.0_deg)
+    {
+        rotatedElbowAngle -= 360.0_deg;
+    }
+    while (rotatedElbowAngle < -180.0_deg)
+    {
+        rotatedElbowAngle += 360.0_deg;
+    }
+
+    // Ensure arm initially seeks parked position (otherwise, it would seek
+    // zero shoulder, zero elbow).
+    SetShoulderAngle(arm::shoulderPositiveStopLimit);
+    SetElbowAngle(arm::elbowNegativeStopLimit);
+
+    // Finnally, reset both of the profiled PID controllers
+    shoulderPIDController_->Reset(rotatedShoulderAngle);
+    elbowPIDController_->Reset(rotatedElbowAngle);
+}
+
+// Discontinuous PID Controller is centered on zero and never wraps
 void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
 {
     units::angle::degree_t rotatedAngle = angle - 90.0_deg;
@@ -93,6 +146,8 @@ void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
 
     commandedShoulderAngle_ = angle;
     shoulderPIDController_->SetGoal(rotatedAngle);
+
+    /* XXX */ printf("Shoulder Goal: %lf -> %lf\n", angle.value(), rotatedAngle.value());
 }
 
 void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
@@ -110,6 +165,8 @@ void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
 
     commandedElbowAngle_ = angle;
     elbowPIDController_->SetGoal(rotatedAngle);
+
+    /* XXX */ printf("Elbow Goal: %lf -> %lf\n", angle.value(), rotatedAngle.value());
 }
 
 void ArmSubsystem::Periodic() noexcept
@@ -214,6 +271,10 @@ void ArmSubsystem::Periodic() noexcept
     gripperX_ = dottedLength_ * sin(units::angle::radian_t{dottedAngle_}.value());
     gripperY_ = dottedLength_ * cos(units::angle::radian_t{dottedAngle_}.value());
 
+    shoulderAngleGyro_.Set(shoulderAngle_.value());
+    elbowAngleGyro_.Set(elbowAngle_.value());
+    dottedAngleGyro_.Set(dottedAngle_.value());
+
     // Obtain base percent power settings, from each ProfiledPIDController.
     units::angle::degree_t rotatedShoulderAngle = shoulderAngle_ - 90.0_deg;
     units::angle::degree_t rotatedElbowAngle = elbowAngle_ + 180.0_deg;
@@ -239,15 +300,21 @@ void ArmSubsystem::Periodic() noexcept
     double shoulder = shoulderPIDController_->Calculate(rotatedShoulderAngle);
     double elbow = elbowPIDController_->Calculate(rotatedElbowAngle);
 
+    /* XXX */ printf("Shoulder Calc: %lf -> %lf\n", shoulderAngle_.value(), rotatedShoulderAngle.value());
+    /* XXX */ printf("Elbow Calc: %lf -> %lf\n", elbowAngle_.value(), rotatedElbowAngle.value());
+
+    shoulderPower_ = shoulder;
+    elbowPower_ = elbow;
+
     // XXX
     // Find the moment arm with respect to gravity -- the horizontal projection
     // of the third side of the triangle.  This acts at the shoulder.
     units::torque::newton_meter_t shoulderTorqueGravity = gripperX_ * arm::pointMass * arm::gravity;
-    double shoulderPercentTorqueGravity = shoulderTorqueGravity / arm::shoulderMaxTorque;
+    shoulderFeedforward_ = shoulderTorqueGravity / arm::shoulderMaxTorque;
 
     // Now do these calculations for the elbow.
     units::torque::newton_meter_t elbowTorqueGravity = (gripperX_ - elbowX_) * arm::pointMass * arm::gravity;
-    double elbowPercentTorqueGravity = elbowTorqueGravity / arm::elbowMaxTorque;
+    elbowFeedforward_ = elbowTorqueGravity / arm::elbowMaxTorque;
 
     // XXX
     // Feedforward calculations
@@ -259,21 +326,21 @@ void ArmSubsystem::Periodic() noexcept
 #if 0
     if (shoulder > 0.0)
     {
-        shoulder += arm::shoulderStaticFeedforward + shoulderPercentTorqueGravity;
+        shoulder += arm::shoulderStaticFeedforward + shoulderFeedforward_;
     }
     else if (shoulder < 0.0)
     {
-        shoulder -= arm::shoulderStaticFeedforward + shoulderPercentTorqueGravity;
+        shoulder -= arm::shoulderStaticFeedforward + shoulderFeedforward_;
     }
 
     // Apply elbow feedforward, compensationg for gravity.
     if (elbow > 0.0)
     {
-        elbow += arm::elbowStaticFeedforward + elbowPercentTorqueGravity;
+        elbow += arm::elbowStaticFeedforward + elbowFeedforward_;
     }
     else if (elbow < 0.0)
     {
-        elbow -= arm::elbowStaticFeedforward + elbowPercentTorqueGravity;
+        elbow -= arm::elbowStaticFeedforward + elbowFeedforward_;
     }
 #endif
 
@@ -306,39 +373,39 @@ void ArmSubsystem::Periodic() noexcept
         elbow = -arm::elbowMaxPower;
     }
 
-    std::string comments;
+    std::string notes;
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.  The shoulder
     // is only constrained by these limits; the elbow has further checks.
     if (shoulder < 0.0 && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeStopLimit)
     {
-        comments += " Shoulder -STOP";
+        notes += " Shoulder -STOP";
         shoulder = 0.0;
     }
     else if (shoulder < -arm::shoulderParkPower && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeParkLimit)
     {
-        comments += " Shoulder -Park";
+        notes += " Shoulder -Park";
         shoulder = -arm::shoulderParkPower;
     }
     else if (shoulder < -arm::shoulderSlowPower && -90.0_deg <= shoulderAngle_ && shoulderAngle_ < arm::shoulderNegativeSlowLimit)
     {
-        comments += " Shoulder -Slow";
+        notes += " Shoulder -Slow";
         shoulder = -arm::shoulderSlowPower;
     }
 
     if (shoulder > 0.0 && arm::shoulderPositiveStopLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
-        comments += " Shoulder +STOP";
+        notes += " Shoulder +STOP";
         shoulder = 0.0;
     }
     else if (shoulder > +arm::shoulderParkPower && arm::shoulderPositiveParkLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
-        comments += " Shoulder +Park";
+        notes += " Shoulder +Park";
         shoulder = +arm::shoulderParkPower;
     }
     else if (shoulder > +arm::shoulderSlowPower && arm::shoulderPositiveSlowLimit <= shoulderAngle_ && shoulderAngle_ < -90.0_deg)
     {
-        comments += " Shoulder +Slow";
+        notes += " Shoulder +Slow";
         shoulder = +arm::shoulderSlowPower;
     }
 
@@ -349,90 +416,99 @@ void ArmSubsystem::Periodic() noexcept
     // will make things worse.
     if (elbow < 0.0 && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeStopLimit)
     {
-        comments += " Elbow -STOP";
+        notes += " Elbow -STOP";
         elbow = 0.0;
 
         if (shoulder < 0.0)
         {
-            comments += " (Shoulder -STOP)";
+            notes += " (Shoulder -STOP)";
             shoulder = 0.0;
         }
     }
     else if (elbow < -arm::elbowParkPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeParkLimit)
     {
-        comments += " Elbow -Park";
+        notes += " Elbow -Park";
         elbow = -arm::elbowParkPower;
 
         if (shoulder < -arm::shoulderParkPower)
         {
-            comments += " (Shoulder -PARK)";
+            notes += " (Shoulder -PARK)";
             shoulder = -arm::shoulderParkPower;
         }
     }
     else if (elbow < -arm::elbowSlowPower && 0.0_deg <= elbowAngle_ && elbowAngle_ < arm::elbowNegativeSlowLimit)
     {
-        comments += " Elbow -Slow";
+        notes += " Elbow -Slow";
         elbow = -arm::elbowSlowPower;
 
         if (shoulder < -arm::shoulderSlowPower)
         {
-            comments += " (Shoulder -SLOW)";
+            notes += " (Shoulder -SLOW)";
             shoulder = -arm::shoulderSlowPower;
         }
     }
 
     if (elbow > 0.0 && arm::elbowPositiveStopLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
-        comments += " Elbow +STOP";
+        notes += " Elbow +STOP";
         elbow = 0.0;
 
         if (shoulder > 0.0)
         {
-            comments += " (Shoulder +STOP)";
+            notes += " (Shoulder +STOP)";
             shoulder = 0.0;
         }
     }
     else if (elbow > +arm::elbowParkPower && arm::elbowPositiveParkLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
-        comments += " Elbow +Park";
+        notes += " Elbow +Park";
         elbow = +arm::elbowParkPower;
 
         if (shoulder > +arm::shoulderParkPower)
         {
-            comments += " (Shoulder +PARK)";
+            notes += " (Shoulder +PARK)";
             shoulder = +arm::shoulderParkPower;
         }
     }
     else if (elbow > +arm::elbowSlowPower && arm::elbowPositiveSlowLimit <= elbowAngle_ && elbowAngle_ < 0.0_deg)
     {
-        comments += " Elbow +Slow";
+        notes += " Elbow +Slow";
         elbow = +arm::elbowSlowPower;
 
         if (shoulder > +arm::shoulderSlowPower)
         {
-            comments += " (Shoulder +SLOW)";
+            notes += " (Shoulder +SLOW)";
             shoulder = +arm::shoulderSlowPower;
         }
     }
 
-    // XXX
+    notes_ = notes;
 
-    if (print_)
+    // XXX
+    if (print_ || test_)
     {
-        printf("**** Arm Status: SA=%lf EA=%lf DL=%lf DA=%lf EX=%lf EY=%lf GX=%lf GY=%lf S%%=%lf E%%=%lf SO=%lf EO=%lf%s\n",
-               shoulderAngle_.value(),
-               elbowAngle_.value(),
-               dottedLength_.value(),
-               dottedAngle_.value(),
-               elbowX_.value(),
-               elbowY_.value(),
-               gripperX_.value(),
-               gripperY_.value(),
-               shoulderPercentTorqueGravity,
-               elbowPercentTorqueGravity,
-               shoulder,
-               elbow,
-               comments.c_str());
+        printf(
+            "**** Arm Status: SA=%lf EA=%lf DL=%lf DA=%lf EX=%lf EY=%lf GX=%lf GY=%lf S%%=%lf E%%=%lf "
+            "SS=%lf ES=%lf SG=%lf EG=%lf SE=%lf EE=%lf SO=%lf EO=%lf%s\n",
+            shoulderAngle_.value(),
+            elbowAngle_.value(),
+            dottedLength_.value(),
+            dottedAngle_.value(),
+            elbowX_.value(),
+            elbowY_.value(),
+            gripperX_.value(),
+            gripperY_.value(),
+            shoulderFeedforward_,
+            elbowFeedforward_,
+            shoulderPIDController_->GetSetpoint().position.value(), // ??
+            elbowPIDController_->GetSetpoint().position.value(),
+            shoulderPIDController_->GetGoal().position.value(),
+            elbowPIDController_->GetGoal().position.value(),
+            shoulderPIDController_->GetPositionError().value(), // ??
+            elbowPIDController_->GetPositionError().value(),
+            shoulder,
+            elbow,
+            notes.c_str());
     }
 
     shoulderMotor_->SetVoltage(shoulder * 12.0_V);
@@ -465,6 +541,7 @@ void ArmSubsystem::TestInit() noexcept
 {
     frc::ShuffleboardTab &shuffleboardShoulderTab = frc::Shuffleboard::GetTab("Shoulder");
     frc::ShuffleboardTab &shuffleboardElbowTab = frc::Shuffleboard::GetTab("Elbow");
+    frc::ShuffleboardTab &shuffleboardArmTab = frc::Shuffleboard::GetTab("Arm");
 
     frc::ShuffleboardLayout &shuffleboardLayoutShoulderSensor =
         shuffleboardShoulderTab.GetLayout("Sensor",
@@ -520,6 +597,87 @@ void ArmSubsystem::TestInit() noexcept
                 std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
                 std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
 
+    // XXX
+    frc::ShuffleboardLayout &shuffleboardLayoutArmAngles =
+        shuffleboardArmTab.GetLayout("Angles",
+                                     frc::BuiltInLayouts::kGrid)
+            .WithPosition(0, 0)
+            .WithSize(10, 5)
+            .WithProperties(wpi::StringMap<nt::Value>{
+                std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
+                std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
+
+    frc::ShuffleboardLayout &shuffleboardLayoutArmGeometry =
+        shuffleboardArmTab.GetLayout("Geometry",
+                                     frc::BuiltInLayouts::kGrid)
+            .WithPosition(0, 6)
+            .WithSize(15, 3)
+            .WithProperties(wpi::StringMap<nt::Value>{
+                std::make_pair("Number of columns", nt::Value::MakeDouble(6.0)),
+                std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
+
+    frc::ShuffleboardLayout &shuffleboardLayoutArmTorque =
+        shuffleboardArmTab.GetLayout("Torque",
+                                     frc::BuiltInLayouts::kGrid)
+            .WithPosition(0, 10)
+            .WithSize(15, 3)
+            .WithProperties(wpi::StringMap<nt::Value>{
+                std::make_pair("Number of columns", nt::Value::MakeDouble(6.0)),
+                std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
+
+    frc::ShuffleboardLayout &shuffleboardLayoutArmNotes =
+        shuffleboardArmTab.GetLayout("Notes",
+                                     frc::BuiltInLayouts::kGrid)
+            .WithPosition(16, 0)
+            .WithSize(11, 13)
+            .WithProperties(wpi::StringMap<nt::Value>{
+                std::make_pair("Number of columns", nt::Value::MakeDouble(1.0)),
+                std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
+
+    shoulderAngleUI_ = &shuffleboardLayoutArmAngles.Add("Shoulder", shoulderAngleGyro_)
+                            .WithPosition(0, 0)
+                            .WithWidget(frc::BuiltInWidgets::kGyro)
+                            .WithProperties(wpi::StringMap<nt::Value>{
+                                std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
+    elbowAngleUI_ = &shuffleboardLayoutArmAngles.Add("Elbow", elbowAngleGyro_)
+                         .WithPosition(1, 0)
+                         .WithWidget(frc::BuiltInWidgets::kGyro)
+                         .WithProperties(wpi::StringMap<nt::Value>{
+                             std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
+    dottedAngleUI_ = &shuffleboardLayoutArmAngles.Add("Dotted", dottedAngleGyro_)
+                          .WithPosition(2, 0)
+                          .WithWidget(frc::BuiltInWidgets::kGyro)
+                          .WithProperties(wpi::StringMap<nt::Value>{
+                              std::make_pair("Counter clockwise", nt::Value::MakeBoolean(true))});
+
+    dottedLengthUI_ = &shuffleboardLayoutArmGeometry.Add("Dotted Length", 0.0)
+                           .WithPosition(0, 0);
+    elbowXUI_ = &shuffleboardLayoutArmGeometry.Add("Elbow X", 0.0)
+                     .WithPosition(1, 0);
+    elbowYUI_ = &shuffleboardLayoutArmGeometry.Add("Elbow Y", 0.0)
+                     .WithPosition(2, 0);
+    gripperXUI_ = &shuffleboardLayoutArmGeometry.Add("Gripper X", 0.0)
+                       .WithPosition(3, 0);
+    gripperYUI_ = &shuffleboardLayoutArmGeometry.Add("Gripper Y", 0.0)
+                       .WithPosition(4, 0);
+
+    shoulderErrorUI_ = &shuffleboardLayoutArmTorque.Add("Shoulder Error", 0.0)
+                            .WithPosition(0, 0);
+    elbowErrorUI_ = &shuffleboardLayoutArmTorque.Add("Elbow Error", 0.0)
+                         .WithPosition(1, 0);
+    shoulderPowerUI_ = &shuffleboardLayoutArmTorque.Add("Shoulder Power", 0.0)
+                            .WithPosition(2, 0);
+    elbowPowerUI_ = &shuffleboardLayoutArmTorque.Add("Elbow Power", 0.0)
+                         .WithPosition(3, 0);
+    shoulderFeedforwardUI_ = &shuffleboardLayoutArmTorque.Add("Shoulder Feedforward", 0.0)
+                                  .WithPosition(4, 0);
+    elbowFeedforwardUI_ = &shuffleboardLayoutArmTorque.Add("Elbow Feedforward", 0.0)
+                               .WithPosition(5, 0);
+
+    armCommentsUI_ = &shuffleboardLayoutArmNotes.Add("Notes", "")
+                          .WithPosition(0, 0);
+    // XXX
+
     shoulderSensor_->ShuffleboardCreate(
         shuffleboardLayoutShoulderSensor,
         [&]() -> std::pair<units::angle::degree_t, units::angle::degree_t>
@@ -562,10 +720,14 @@ void ArmSubsystem::TestInit() noexcept
                        .WithPosition(0, 0)
                        .WithWidget(frc::BuiltInWidgets::kPIDController);
 
-    test_ = true;
-
     shoulderMotor_->SetIdleMode(SmartMotorBase::IdleMode::kCoast);
     elbowMotor_->SetIdleMode(SmartMotorBase::IdleMode::kCoast);
+    shoulderMotor_->Stop();
+    elbowMotor_->Stop();
+
+    Reset();
+
+    test_ = true;
 }
 
 void ArmSubsystem::TestExit() noexcept
@@ -574,6 +736,10 @@ void ArmSubsystem::TestExit() noexcept
 
     shoulderMotor_->SetIdleMode(SmartMotorBase::IdleMode::kBrake);
     elbowMotor_->SetIdleMode(SmartMotorBase::IdleMode::kBrake);
+    shoulderMotor_->Stop();
+    elbowMotor_->Stop();
+
+    Reset();
 }
 
 void ArmSubsystem::TestPeriodic() noexcept
@@ -609,12 +775,33 @@ void ArmSubsystem::TestPeriodic() noexcept
     }
     shoulderResetUI_ = false;
 
+    dottedLengthUI_->GetEntry()->SetDouble(dottedLength_.value());
+    elbowXUI_->GetEntry()->SetDouble(elbowX_.value());
+    elbowYUI_->GetEntry()->SetDouble(elbowY_.value());
+    gripperXUI_->GetEntry()->SetDouble(gripperX_.value());
+    gripperYUI_->GetEntry()->SetDouble(gripperY_.value());
+
+    shoulderErrorUI_->GetEntry()->SetDouble(shoulderPIDController_->GetPositionError().value());
+    elbowErrorUI_->GetEntry()->SetDouble(elbowPIDController_->GetPositionError().value());
+    shoulderPowerUI_->GetEntry()->SetDouble(shoulderPower_);
+    elbowPowerUI_->GetEntry()->SetDouble(elbowPower_);
+    shoulderFeedforwardUI_->GetEntry()->SetDouble(shoulderFeedforward_);
+    elbowFeedforwardUI_->GetEntry()->SetDouble(elbowFeedforward_);
+
+    armCommentsUI_->GetEntry()->SetString(notes_);
+
     Periodic();
 }
 
 void ArmSubsystem::DisabledInit() noexcept {}
 
-void ArmSubsystem::DisabledExit() noexcept {}
+void ArmSubsystem::DisabledExit() noexcept
+{
+    shoulderMotor_->Stop();
+    elbowMotor_->Stop();
+
+    Reset();
+}
 
 void ArmSubsystem::BurnConfig() noexcept
 {
@@ -628,27 +815,30 @@ void ArmSubsystem::ClearFaults() noexcept
     elbowMotor_->ClearFaults();
 }
 
+void ArmSubsystem::OpenGrip() noexcept
+{
+    pneumaticGrip_->Set(frc::DoubleSolenoid::kForward);
+    suctionMotorsOne_->SetVoltage(+0.5 * 12.0_V);
+    suctionMotorsTwo_->SetVoltage(+0.5 * 12.0_V);
+}
+
+void ArmSubsystem::CloseGrip() noexcept
+{
+    pneumaticGrip_->Set(frc::DoubleSolenoid::kReverse);
+    suctionMotorsOne_->SetVoltage(-0.5 * 12.0_V);
+    suctionMotorsTwo_->SetVoltage(-0.5 * 12.0_V);
+}
+
+void ArmSubsystem::RelaxGrip() noexcept
+{
+    pneumaticGrip_->Set(frc::DoubleSolenoid::kOff);
+    suctionMotorsOne_->Set(0.0);
+    suctionMotorsTwo_->Set(0.0);
+}
+
 frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept
 {
     // Inline construction of command goes here.
     // Subsystem::RunOnce implicitly requires `this` subsystem.
     return RunOnce([/* this */] { /* one-time action goes here */ });
-}
-
-void ArmSubsystem::OpenGrip() noexcept
-{
-    // pneuGrip_->Set(frc::DoubleSolenoid::kForward);
-    motorGrip_->SetVoltage(+0.5 * 12.0_V);
-}
-
-void ArmSubsystem::CloseGrip() noexcept
-{
-    // pneuGrip_->Set(frc::DoubleSolenoid::kReverse);
-    motorGrip_->SetVoltage(-0.5 * 12.0_V);
-}
-
-void ArmSubsystem::RelaxGrip() noexcept
-{
-    // pneuGrip_->Set(frc::DoubleSolenoid::kOff);
-    motorGrip_->Set(0.0);
 }

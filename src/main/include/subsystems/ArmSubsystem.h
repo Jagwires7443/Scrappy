@@ -19,6 +19,7 @@
 #include <units/length.h>
 
 #include <memory>
+#include <string>
 
 class ArmSubsystem : public frc2::SubsystemBase
 {
@@ -85,7 +86,14 @@ public:
   {
     print_ = true;
   }
+
+  std::string TestNotes() noexcept
+  {
+    return std::string(notes_);
+  }
 #endif
+
+  void Reset() noexcept;
 
   void SetShoulder(double percent) noexcept
   {
@@ -124,8 +132,9 @@ private:
   std::unique_ptr<SmartMotorBase> elbowMotorBase_;
   std::unique_ptr<SmartMotor<units::angle::degrees>> shoulderMotor_;
   std::unique_ptr<SmartMotor<units::angle::degrees>> elbowMotor_;
-  std::unique_ptr<frc::DoubleSolenoid> pneuGrip_;
-  std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> motorGrip_;
+  std::unique_ptr<frc::DoubleSolenoid> pneumaticGrip_;
+  std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> suctionMotorsOne_;
+  std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> suctionMotorsTwo_;
 
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> shoulderPIDController_;
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> elbowPIDController_;
@@ -133,8 +142,8 @@ private:
   std::unique_ptr<TuningPID> shoulderPIDControllerUI_;
   std::unique_ptr<TuningPID> elbowPIDControllerUI_;
 
-  units::angle::degree_t commandedShoulderAngle_{arm::shoulderPositiveStopLimit};
-  units::angle::degree_t commandedElbowAngle_{arm::elbowNegativeStopLimit};
+  units::angle::degree_t commandedShoulderAngle_{0.0};
+  units::angle::degree_t commandedElbowAngle_{0.0};
 
   double shoulderControlUI_{0.0};
   bool shoulderResetUI_{false};
@@ -159,4 +168,31 @@ private:
   bool status_{false};
   bool print_{false};
   bool test_{false};
+
+  HeadingGyro shoulderAngleGyro_;
+  HeadingGyro elbowAngleGyro_;
+  HeadingGyro dottedAngleGyro_;
+
+  double shoulderPower_{0.0};
+  double elbowPower_{0.0};
+  double shoulderFeedforward_{0.0};
+  double elbowFeedforward_{0.0};
+
+  std::string notes_;
+
+  frc::ComplexWidget *shoulderAngleUI_{nullptr};
+  frc::ComplexWidget *elbowAngleUI_{nullptr};
+  frc::ComplexWidget *dottedAngleUI_{nullptr};
+  frc::SimpleWidget *dottedLengthUI_{nullptr};
+  frc::SimpleWidget *elbowXUI_{nullptr};
+  frc::SimpleWidget *elbowYUI_{nullptr};
+  frc::SimpleWidget *gripperXUI_{nullptr};
+  frc::SimpleWidget *gripperYUI_{nullptr};
+  frc::SimpleWidget *shoulderErrorUI_{nullptr};
+  frc::SimpleWidget *elbowErrorUI_{nullptr};
+  frc::SimpleWidget *shoulderPowerUI_{nullptr};
+  frc::SimpleWidget *elbowPowerUI_{nullptr};
+  frc::SimpleWidget *shoulderFeedforwardUI_{nullptr};
+  frc::SimpleWidget *elbowFeedforwardUI_{nullptr};
+  frc::SimpleWidget *armCommentsUI_{nullptr};
 };

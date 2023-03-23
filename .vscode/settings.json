@@ -94,7 +94,8 @@
     "streambuf": "cpp",
     "thread": "cpp",
     "cinttypes": "cpp",
-    "typeindex": "cpp"
+    "typeindex": "cpp",
+    "*.mac": "cpp"
   },
   "wpilib.skipTests": true
 }

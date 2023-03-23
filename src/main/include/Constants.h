@@ -160,7 +160,8 @@ namespace nonDrive
     constexpr int kGripPneuOpen = 0;
     constexpr int kGripPneuClose = 1;
 
-    constexpr int kGripMotorCanID = 2;
+    constexpr int kSuctionMotorsOneCanID = 1;
+    constexpr int kSuctionMotorsTwoCanID = 2;
 }
 
 namespace arm
@@ -208,14 +209,11 @@ namespace arm
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.
     // XXX For now, restrict arm to forward only.
-    // constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeStopLimit = +120.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeStopLimit = -60.0_deg;
     constexpr units::angle::degree_t shoulderPositiveStopLimit = -120.0_deg;
-    // constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeParkLimit = +125.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeParkLimit = -55.0_deg;
     constexpr units::angle::degree_t shoulderPositiveParkLimit = -125.0_deg;
-    // constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
-    constexpr units::angle::degree_t shoulderNegativeSlowLimit = +130.0_deg;
+    constexpr units::angle::degree_t shoulderNegativeSlowLimit = -50.0_deg;
     constexpr units::angle::degree_t shoulderPositiveSlowLimit = -130.0_deg;
 
     // Excluded range of angle for elbow, centered on 0.0_deg.

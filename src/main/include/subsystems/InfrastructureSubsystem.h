@@ -35,6 +35,8 @@ public:
 
     void SetLEDPattern(uint32_t pattern) noexcept;
 
+    void SetNumberLights(bool on) noexcept;
+
 private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
     std::unique_ptr<frc::Compressor> ph_;

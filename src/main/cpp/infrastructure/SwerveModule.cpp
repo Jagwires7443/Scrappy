@@ -247,6 +247,7 @@ void SwerveModule::ResetTurning() noexcept
     m_turningPosition = position.value();
     m_turningMotor->SpecifyPosition(m_turningPosition);
 
+    m_rioPIDController->SetGoal(m_commandedHeading);
     m_rioPIDController->Reset(m_turningPosition);
 }
 
