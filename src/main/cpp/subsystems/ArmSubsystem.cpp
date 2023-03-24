@@ -406,12 +406,33 @@ void ArmSubsystem::Periodic() noexcept
     // rotates in order to keep the gripper away from the limit height.
     if (gripperY_ >= arm::kMaxVerticalExtension)
     {
-        // XXX
-        if (elbowX_ < 0.0_m) // Upper left quadrant; positive shoulder rotation OK
+        // Work out two angles between forearm and a horizontal line which passes
+        // through the elbow...
+        units::angle::degree_t positiveShoulderAngle = shoulderAngle_;
+        units::angle::degree_t positiveElbowAngle = elbowAngle_;
+
+        if (positiveShoulderAngle < 0.0_deg)
         {
+            positiveShoulderAngle += 360.0_deg;
         }
-        else // Upper right quadrant; negative shoulder rotation OK
+        if (positiveElbowAngle < 0.0_deg)
         {
+            positiveElbowAngle += 360.0_deg;
+        }
+
+        units::angle::degree_t positveSumOfAngles = positiveShoulderAngle + positiveElbowAngle;
+
+        units::angle::degree_t leftAngle = 360.0_deg - positiveSumOfAngles;
+        units::angle::degree_t rightAngle = positiveSumOfAngles - 180.0_deg;
+
+        // Rotate elbow toward the horizon, in order to keep it away from the height limit.
+        if (leftAngle < rightAngle)
+        {
+            elbow = +arm::elbowMaxPower;
+        }
+        else
+        {
+            elbow = -arm::elbowMaxPower;
         }
     }
 
