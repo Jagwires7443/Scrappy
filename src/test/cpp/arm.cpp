@@ -234,15 +234,15 @@ TEST_F(ArmTest, SlowParkStop)
 {
     arm_.TestPrint(); // Turn on extra arm output
 
-    SetAngles(-118.0_deg, -180.0_deg); // Sensors place shoulder in stop zone; elbow straight
+    SetAngles(-118.0_deg, +30.0_deg); // Sensors place shoulder in stop zone; elbow folded
     arm_.Reset();
-    arm_.SetAngles(-110.0_deg, -180.0_deg); // Command arm further into stop zone
+    arm_.SetAngles(-110.0_deg, +30.0_deg); // Command arm further into stop zone
     arm_.Periodic();
     EXPECT_THAT(arm_.TestNotes(), EndsWith(" Shoulder +STOP"));
 
-    SetAngles(-62.0_deg, -180.0_deg); // Sensors place shoulder in stop zone; elbow straight
+    SetAngles(-62.0_deg, -30.0_deg); // Sensors place shoulder in stop zone; elbow folded
     arm_.Reset();
-    arm_.SetAngles(-70.0_deg, -180.0_deg); // Command arm further into stop zone
+    arm_.SetAngles(-70.0_deg, -30.0_deg); // Command arm further into stop zone
     arm_.Periodic();
     EXPECT_THAT(arm_.TestNotes(), EndsWith(" Shoulder -STOP"));
 }

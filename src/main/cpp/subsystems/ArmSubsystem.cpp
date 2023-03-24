@@ -122,16 +122,54 @@ void ArmSubsystem::Reset() noexcept
 
     // Ensure arm initially seeks parked position (otherwise, it would seek
     // zero shoulder, zero elbow).
-    SetShoulderAngle(arm::shoulderPositiveStopLimit);
-    SetElbowAngle(arm::elbowNegativeStopLimit);
+    SetAngles(arm::shoulderPositiveStopLimit, arm::elbowNegativeStopLimit);
 
-    // Finnally, reset both of the profiled PID controllers
+    // Finally, reset both of the profiled PID controllers.
     shoulderPIDController_->Reset(rotatedShoulderAngle);
     elbowPIDController_->Reset(rotatedElbowAngle);
 }
 
+// Update commandedX_ and commandedY_, using only commandedShoulderAngle_ and
+// commandedElbowAngle_ (plus arm lengths).
+void ArmSubsystem::UpdateXY() noexcept
+{
+    // Law of cosines: c = sqrt(a^2 + b^2 - 2*a*b*cos(angle_c))
+    units::length::meter_t dottedLength = units::length::meter_t{sqrt(
+        pow(units::length::meter_t{arm::upperArmLength}.value(), 2) +
+        pow(units::length::meter_t{arm::lowerArmLength}.value(), 2) -
+        2.0 * units::length::meter_t{arm::upperArmLength}.value() *
+            units::length::meter_t{arm::lowerArmLength}.value() *
+            cos(units::angle::radian_t{commandedElbowAngle_}.value()))};
+
+    // Law of cosines: angle_b = arc_cos((c^2 + a^2 - b^2) / (2*c*a))
+    double imprecision =
+        (pow(units::length::meter_t{dottedLength}.value(), 2) +
+         pow(units::length::meter_t{arm::upperArmLength}.value(), 2) -
+         pow(units::length::meter_t{arm::lowerArmLength}.value(), 2)) /
+        (2.0 * units::length::meter_t{dottedLength}.value() *
+         units::length::meter_t{arm::upperArmLength}.value());
+
+    // A bit of defensive logic, in case of slight imprecision in calculations.
+    if (imprecision > +1.0)
+    {
+        imprecision = +1.0;
+    }
+    if (imprecision < -1.0)
+    {
+        imprecision = -1.0;
+    }
+
+    // Now, adjust this angle to account for it being relative to shoulder angle,
+    // so that the final angle is in the robot coordinate system, instead of that
+    // of the shoulder.
+    units::angle::radian_t dottedAngle = commandedShoulderAngle_ + units::angle::radian_t{acos(imprecision)};
+
+    commandedX_ = dottedLength * cos(units::angle::radian_t{dottedAngle}.value());
+    commandedY_ = dottedLength * sin(units::angle::radian_t{dottedAngle}.value());
+}
+
 // Discontinuous PID Controller is centered on zero and never wraps
-void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
+void ArmSubsystem::SetShoulderAngleInternal(units::angle::degree_t angle, bool cartesianPolarNot) noexcept
 {
     units::angle::degree_t rotatedAngle = angle - 90.0_deg;
 
@@ -145,10 +183,16 @@ void ArmSubsystem::SetShoulderAngle(units::angle::degree_t angle) noexcept
     }
 
     commandedShoulderAngle_ = angle;
+    cartesianPolarNot_ = cartesianPolarNot;
     shoulderPIDController_->SetGoal(rotatedAngle);
+
+    if (!cartesianPolarNot)
+    {
+        UpdateXY();
+    }
 }
 
-void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
+void ArmSubsystem::SetElbowAngleInternal(units::angle::degree_t angle, bool cartesianPolarNot) noexcept
 {
     units::angle::degree_t rotatedAngle = angle + 180.0_deg;
 
@@ -162,7 +206,13 @@ void ArmSubsystem::SetElbowAngle(units::angle::degree_t angle) noexcept
     }
 
     commandedElbowAngle_ = angle;
+    cartesianPolarNot_ = cartesianPolarNot;
     elbowPIDController_->SetGoal(rotatedAngle);
+
+    if (!cartesianPolarNot)
+    {
+        UpdateXY();
+    }
 }
 
 void ArmSubsystem::Periodic() noexcept
@@ -299,7 +349,6 @@ void ArmSubsystem::Periodic() noexcept
     shoulderPower_ = shoulder;
     elbowPower_ = elbow;
 
-    // XXX
     // Find the moment arm with respect to gravity -- the horizontal projection
     // of the third side of the triangle.  This acts at the shoulder.
     units::torque::newton_meter_t shoulderTorqueGravity = gripperX_ * arm::pointMass * arm::gravity;
@@ -309,14 +358,9 @@ void ArmSubsystem::Periodic() noexcept
     units::torque::newton_meter_t elbowTorqueGravity = (gripperX_ - elbowX_) * arm::pointMass * arm::gravity;
     elbowFeedforward_ = elbowTorqueGravity / arm::elbowMaxTorque;
 
-    // XXX
-    // Feedforward calculations
-    // PID Tuning / position seeking
-    // XXX
-
     // Apply shoulder feedforward, compensationg for gravity.  Gravity might be
     // adding or subtracting.
-#if 0
+#if 0 // XXX
     if (shoulder > 0.0)
     {
         shoulder += arm::shoulderStaticFeedforward + shoulderFeedforward_;
@@ -336,6 +380,40 @@ void ArmSubsystem::Periodic() noexcept
         elbow -= arm::elbowStaticFeedforward + elbowFeedforward_;
     }
 #endif
+
+    // Prevent arm from extending beyond limits in the rules, or below ground level
+    // by stopping rotation that drives things in these directions.  (The arm isn't
+    // currently long enough to be capable of exceeding the horizontal limits.)
+    if (gripperY_ <= arm::kMinVerticalExtension)
+    {
+        // Positive shoulder rotation and in lower left quadrant, or negative
+        // rotation and lower right quadrant.
+        if ((shoulder > 0.0 && elbowX_ < 0.0_m) ||
+            (shoulder < 0.0 && elbowX_ >= 0.0_m))
+        {
+            shoulder = 0.0;
+        }
+
+        if ((elbow > 0.0 && elbowX_ < 0.0_m) ||
+            (elbow < 0.0 && elbowX_ >= 0.0_m))
+        {
+            elbow = 0.0;
+        }
+    }
+
+    // Prevent arm from exceeding the height limit, specified by the rules.
+    // In this case, leave the shoulder alone, but override the elbow, so that it
+    // rotates in order to keep the gripper away from the limit height.
+    if (gripperY_ >= arm::kMaxVerticalExtension)
+    {
+        // XXX
+        if (elbowX_ < 0.0_m) // Upper left quadrant; positive shoulder rotation OK
+        {
+        }
+        else // Upper right quadrant; negative shoulder rotation OK
+        {
+        }
+    }
 
     // In test mode, override prior calculations and start with UI-supplied values.
     if (test_)
@@ -483,7 +561,7 @@ void ArmSubsystem::Periodic() noexcept
 
     notes_ = notes;
 
-    if (print_ || test_) // XXX remove "test_"
+    if (print_)
     {
         printf(
             "**** Arm Status: SA=%lf EA=%lf DL=%lf DA=%lf EX=%lf EY=%lf GX=%lf GY=%lf S%%=%lf E%%=%lf "
@@ -595,7 +673,6 @@ void ArmSubsystem::TestInit() noexcept
                 std::make_pair("Number of columns", nt::Value::MakeDouble(3.0)),
                 std::make_pair("Number of rows", nt::Value::MakeDouble(1.0))});
 
-    // XXX
     frc::ShuffleboardLayout &shuffleboardLayoutArmAngles =
         shuffleboardArmTab.GetLayout("Angles",
                                      frc::BuiltInLayouts::kGrid)
@@ -674,7 +751,6 @@ void ArmSubsystem::TestInit() noexcept
 
     armCommentsUI_ = &shuffleboardLayoutArmNotes.Add("Notes", "")
                           .WithPosition(0, 0);
-    // XXX
 
     shoulderSensor_->ShuffleboardCreate(
         shuffleboardLayoutShoulderSensor,
@@ -793,8 +869,8 @@ void ArmSubsystem::TestPeriodic() noexcept
 
 void ArmSubsystem::SetXY(units::length::meter_t x, units::length::meter_t y, bool positiveElbowAngle) noexcept
 {
-    targetX_ = x;
-    targetY_ = y;
+    commandedX_ = x;
+    commandedY_ = y;
 
     units::length::meter_t radius = units::length::meter_t{std::hypot(x.value(), y.value())};
 
@@ -858,20 +934,22 @@ void ArmSubsystem::SetXY(units::length::meter_t x, units::length::meter_t y, boo
     // is dottedAngle +/- shoulderOffsetAngle.
     if (positiveElbowAngle)
     {
-        SetAngles(dottedAngle + shoulderOffsetAngle, +elbowAngle);
+        SetShoulderAngleInternal(dottedAngle + shoulderOffsetAngle, true);
+        SetElbowAngleInternal(+elbowAngle, true);
     }
     else
     {
-        SetAngles(dottedAngle - shoulderOffsetAngle, -elbowAngle);
+        SetShoulderAngleInternal(dottedAngle - shoulderOffsetAngle, true);
+        SetElbowAngleInternal(-elbowAngle, true);
     }
 }
 
 void ArmSubsystem::IncrementXY(units::length::meter_t x, units::length::meter_t y) noexcept
 {
-    targetX_ += x;
-    targetY_ += y;
+    commandedX_ += x;
+    commandedY_ += y;
 
-    SetXY(targetX_, targetY_, elbowAngle_ >= 0.0_deg);
+    SetXY(commandedX_, commandedY_, elbowAngle_ >= 0.0_deg);
 }
 
 void ArmSubsystem::DisabledInit() noexcept {}

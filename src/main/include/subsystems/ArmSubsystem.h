@@ -73,12 +73,12 @@ public:
 
   units::length::meter_t GetTargetX() noexcept
   {
-    return targetX_;
+    return commandedX_;
   }
 
   units::length::meter_t GetTargetY() noexcept
   {
-    return targetY_;
+    return commandedY_;
   }
 
   units::length::meter_t GetDottedLength() noexcept
@@ -115,9 +115,9 @@ public:
     elbowControlUI_ = percent;
   } // XXX
 
-  void SetShoulderAngle(units::angle::degree_t angle) noexcept;
+  void SetShoulderAngle(units::angle::degree_t angle) noexcept { SetShoulderAngleInternal(angle, false); }
 
-  void SetElbowAngle(units::angle::degree_t angle) noexcept;
+  void SetElbowAngle(units::angle::degree_t angle) noexcept { SetElbowAngleInternal(angle, false); }
 
   void SetAngles(units::angle::degree_t shoulderAngle, units::angle::degree_t elbowAngle) noexcept
   {
@@ -146,6 +146,11 @@ public:
   frc2::CommandPtr ArmMethodExampleCommandFactory() noexcept;
 
 private:
+  void SetShoulderAngleInternal(units::angle::degree_t angle, bool cartesianPolarNot) noexcept;
+  void SetElbowAngleInternal(units::angle::degree_t angle, bool cartesianPolarNot) noexcept;
+
+  void UpdateXY() noexcept;
+
   std::unique_ptr<AngleSensor> shoulderSensor_;
   std::unique_ptr<AngleSensor> elbowSensor_;
   std::unique_ptr<SmartMotorBase> shoulderMotorBase_;
@@ -165,6 +170,12 @@ private:
   units::angle::degree_t commandedShoulderAngle_{0.0};
   units::angle::degree_t commandedElbowAngle_{0.0};
 
+  units::length::meter_t commandedX_{0.0_m};
+  units::length::meter_t commandedY_{0.0_m};
+
+  // False if angles control things, true if XY coordinates do.
+  bool cartesianPolarNot_{false};
+
   double shoulderControlUI_{0.0};
   bool shoulderResetUI_{false};
   double elbowControlUI_{0.0};
@@ -181,9 +192,6 @@ private:
 
   units::length::meter_t gripperX_{0.0_m};
   units::length::meter_t gripperY_{0.0_m};
-
-  units::length::meter_t targetX_{0.0_m};
-  units::length::meter_t targetY_{0.0_m};
 
   units::length::meter_t dottedLength_{0.0_m};
   units::angle::degree_t dottedAngle_{0.0_deg};
