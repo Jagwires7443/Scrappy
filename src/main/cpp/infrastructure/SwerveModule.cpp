@@ -758,6 +758,16 @@ void SwerveModule::TestPeriodic() noexcept
     }
 }
 
+void SwerveModule::DisabledInit() noexcept
+{
+    ResetEncoders();
+}
+
+void SwerveModule::DisabledExit() noexcept
+{
+    ResetEncoders();
+}
+
 void SwerveModule::TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept
 {
     m_rioPIDController->SetPID(P, I, D);

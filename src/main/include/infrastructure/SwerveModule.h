@@ -246,6 +246,8 @@ public:
   void TestInit() noexcept;
   void TestExit() noexcept;
   void TestPeriodic() noexcept;
+  void DisabledInit() noexcept;
+  void DisabledExit() noexcept;
 
   // Provide PID settings used for all motion control (besides from test mode).
   void TurningPositionPID(double P, double I, double IZ, double IM, double D, double DF, double F, double V, double A) noexcept;

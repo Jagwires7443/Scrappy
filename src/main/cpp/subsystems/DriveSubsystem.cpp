@@ -790,6 +790,11 @@ void DriveSubsystem::DisabledInit() noexcept
   m_run = false;
 
   UpdateGraphTab(m_graphSelection);
+
+  m_frontLeftSwerveModule->DisabledInit();
+  m_frontRightSwerveModule->DisabledInit();
+  m_rearLeftSwerveModule->DisabledInit();
+  m_rearRightSwerveModule->DisabledInit();
 }
 
 void DriveSubsystem::DisabledExit() noexcept
@@ -797,6 +802,11 @@ void DriveSubsystem::DisabledExit() noexcept
   m_run = true;
 
   UpdateGraphTab(m_graphSelection);
+
+  m_frontLeftSwerveModule->DisabledExit();
+  m_frontRightSwerveModule->DisabledExit();
+  m_rearLeftSwerveModule->DisabledExit();
+  m_rearRightSwerveModule->DisabledExit();
 }
 
 bool DriveSubsystem::GetStatus() const noexcept
