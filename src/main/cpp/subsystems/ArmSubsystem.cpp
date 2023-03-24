@@ -420,7 +420,7 @@ void ArmSubsystem::Periodic() noexcept
             positiveElbowAngle += 360.0_deg;
         }
 
-        units::angle::degree_t positveSumOfAngles = positiveShoulderAngle + positiveElbowAngle;
+        units::angle::degree_t positiveSumOfAngles = positiveShoulderAngle + positiveElbowAngle;
 
         units::angle::degree_t leftAngle = 360.0_deg - positiveSumOfAngles;
         units::angle::degree_t rightAngle = positiveSumOfAngles - 180.0_deg;
