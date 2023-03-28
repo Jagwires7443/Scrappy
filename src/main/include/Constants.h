@@ -171,19 +171,19 @@ namespace arm
 
     // Constraints to avoid violating a game rule, risking a penalties.
     // And, don't lower gripper below an inch off the ground.
-    constexpr units::length::meter_t kMaxHorizontalExtension = 62.5_in;
+    constexpr units::length::meter_t kMaxHorizontalExtension = +62.5_in;
     constexpr units::length::meter_t kMinHorizontalExtension = -62.5_in;
-    constexpr units::length::meter_t kMaxVerticalExtension = 38.5_in;
+    constexpr units::length::meter_t kMaxVerticalExtension = +38.5_in;
     constexpr units::length::meter_t kMinVerticalExtension = -38.5_in;
 
     constexpr units::angular_velocity::degrees_per_second_t kShoulderPositionMaxVelocity = 90.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kShoulderPositionMaxAcceleration = 900.0_deg_per_s_sq;
-    constexpr double kShoulderPositionP = 0.006;
+    constexpr double kShoulderPositionP = 0.012;
     constexpr units::angle::degree_t kShoulderTolerance = 2.5_deg;
 
     constexpr units::angular_velocity::degrees_per_second_t kElbowPositionMaxVelocity = 90.0_deg_per_s;
     constexpr units::angular_acceleration::degrees_per_second_squared_t kElbowPositionMaxAcceleration = 900.0_deg_per_s_sq;
-    constexpr double kElbowPositionP = 0.006;
+    constexpr double kElbowPositionP = 0.012;
     constexpr units::angle::degree_t kElbowTolerance = 2.5_deg;
 
     // Fixed voltage required to overcome static friction to get things moving.
@@ -205,7 +205,7 @@ namespace arm
 
     constexpr double elbowParkPower = 0.10;
     constexpr double elbowSlowPower = 0.25;
-    constexpr double elbowMaxPower = 0.30;
+    constexpr double elbowMaxPower = 0.35;
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.
     constexpr units::angle::degree_t shoulderNegativeStopLimit = -58.0_deg;
