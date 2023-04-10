@@ -47,6 +47,16 @@ ArmSubsystem::ArmSubsystem() noexcept
     suctionMotorsOne_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsOneCanID);
     suctionMotorsTwo_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsTwoCanID);
 
+    dump1_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 2);
+    dump2_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 3);
+    dump3_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 4);
+    dump4_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 5);
+
+    dump1_->SetPulseDuration(2.5_s);
+    dump2_->SetPulseDuration(2.5_s);
+    dump3_->SetPulseDuration(2.5_s);
+    dump4_->SetPulseDuration(2.5_s);
+
     // Note that these controllers will avoid wrapping at [-180.0_deg, +180.0_deg).
     // For the shoulder, must avoid -90.0_deg; for the elbow, must avoid 0.0_deg.
     // Since gravity is handled via feedforward, it is possible to rotate the no-wrap
@@ -997,16 +1007,26 @@ void ArmSubsystem::ClearFaults() noexcept
 
 void ArmSubsystem::OpenGrip() noexcept
 {
-    pneumaticGrip_->Set(frc::DoubleSolenoid::kForward);
-    suctionMotorsOne_->SetVoltage(+0.5 * 12.0_V);
-    suctionMotorsTwo_->SetVoltage(+0.5 * 12.0_V);
+    // pneumaticGrip_->Set(frc::DoubleSolenoid::kForward);
+    suctionMotorsOne_->Set(0.0);
+    suctionMotorsTwo_->Set(0.0);
+
+    dump1_->Set(true);
+    dump2_->Set(true);
+    dump3_->Set(true);
+    dump4_->Set(true);
 }
 
 void ArmSubsystem::CloseGrip() noexcept
 {
-    pneumaticGrip_->Set(frc::DoubleSolenoid::kReverse);
-    suctionMotorsOne_->SetVoltage(-0.5 * 12.0_V);
-    suctionMotorsTwo_->SetVoltage(-0.5 * 12.0_V);
+    // pneumaticGrip_->Set(frc::DoubleSolenoid::kReverse);
+    // suctionMotorsOne_->SetVoltage(12.0_V);
+    suctionMotorsTwo_->SetVoltage(12.0_V);
+
+    dump1_->Set(false);
+    dump2_->Set(false);
+    dump3_->Set(false);
+    dump4_->Set(false);
 }
 
 void ArmSubsystem::RelaxGrip() noexcept
@@ -1014,6 +1034,11 @@ void ArmSubsystem::RelaxGrip() noexcept
     pneumaticGrip_->Set(frc::DoubleSolenoid::kOff);
     suctionMotorsOne_->Set(0.0);
     suctionMotorsTwo_->Set(0.0);
+
+    dump1_->Set(false);
+    dump2_->Set(false);
+    dump3_->Set(false);
+    dump4_->Set(false);
 }
 
 frc2::CommandPtr ArmSubsystem::ArmMethodExampleCommandFactory() noexcept

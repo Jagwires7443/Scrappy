@@ -7,6 +7,7 @@
 #include <ctre/phoenix/motorcontrol/can/WPI_TalonSRX.h>
 #include <frc/controller/ProfiledPIDController.h>
 #include <frc/DoubleSolenoid.h>
+#include <frc/Solenoid.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 
@@ -160,6 +161,11 @@ private:
   std::unique_ptr<frc::DoubleSolenoid> pneumaticGrip_;
   std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> suctionMotorsOne_;
   std::unique_ptr<ctre::phoenix::motorcontrol::can::WPI_TalonSRX> suctionMotorsTwo_;
+
+  std::unique_ptr<frc::Solenoid> dump1_;
+  std::unique_ptr<frc::Solenoid> dump2_;
+  std::unique_ptr<frc::Solenoid> dump3_;
+  std::unique_ptr<frc::Solenoid> dump4_;
 
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> shoulderPIDController_;
   std::unique_ptr<frc::ProfiledPIDController<units::angle::degrees>> elbowPIDController_;
