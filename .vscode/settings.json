@@ -95,7 +95,9 @@
     "thread": "cpp",
     "cinttypes": "cpp",
     "typeindex": "cpp",
-    "*.mac": "cpp"
+    "*.mac": "cpp",
+    "charconv": "cpp",
+    "forward_list": "cpp"
   },
   "wpilib.skipTests": true
 }

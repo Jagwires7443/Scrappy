@@ -1,5 +1,7 @@
 #pragma once
 
+#include "infrastructure/DotStarLEDs.h"
+
 #include <frc/Compressor.h>
 #include <frc/motorcontrol/Spark.h>
 #include <frc/PowerDistribution.h>
@@ -41,4 +43,5 @@ private:
     std::unique_ptr<frc::PowerDistribution> pdh_;
     std::unique_ptr<frc::Compressor> ph_;
     std::unique_ptr<frc::Spark> leds_;
+    std::unique_ptr<DotStarLEDs> niceLeds_;
 };

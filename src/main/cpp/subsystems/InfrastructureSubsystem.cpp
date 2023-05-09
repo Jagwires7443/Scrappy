@@ -8,6 +8,7 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
     pdh_ = std::make_unique<frc::PowerDistribution>(1, frc::PowerDistribution::ModuleType::kRev);
     ph_ = std::make_unique<frc::Compressor>(1, frc::PneumaticsModuleType::REVPH);
     leds_ = std::make_unique<frc::Spark>(0);
+    niceLeds_ = std::make_unique<DotStarLEDs>(256);
 
     pdh_->ClearStickyFaults();
     pdh_->SetSwitchableChannel(false);
@@ -15,6 +16,11 @@ InfrastructureSubsystem::InfrastructureSubsystem() noexcept
     Enable();
     SetLEDPattern(12);
     SetNumberLights(false);
+
+    niceLeds_->SetLED(0, DotStarLEDs::bgrv{.blue = 0xff, .green = 0x00, .red = 0x00, .value = 0x0f});
+    niceLeds_->SetLED(1, DotStarLEDs::bgrv{.blue = 0x00, .green = 0xff, .red = 0x00, .value = 0x0f});
+    niceLeds_->SetLED(2, DotStarLEDs::bgrv{.blue = 0x00, .green = 0x00, .red = 0xff, .value = 0x0f});
+    niceLeds_->Apply();
 }
 
 void InfrastructureSubsystem::Periodic() noexcept {}
