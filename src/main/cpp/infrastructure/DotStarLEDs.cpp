@@ -43,14 +43,24 @@ DotStarLEDs::DotStarLEDs(uint32_t length) noexcept : length_{length}
     // SPI_->SetMode(frc::SPI::Mode::kMode0);
 
     // SPI_->SetChipSelectActiveLow();
-    SPI_->SetClockRate(250000);
+    // SPI_->SetClockRate(500000);
 }
 
 void DotStarLEDs::SetLED(uint32_t index, const bgrv &color) noexcept
 {
     // No modification beyond the specified length, or value of 32 or higher.
-    if (index >= length_ || (color.value & 0xe0) != 0)
+    if (index >= length_)
     {
+        return;
+    }
+
+    if ((color.value & 0xe0) != 0)
+    {
+        (*data_)[(index + 1) * 4 + 0] = 0xe0;
+        (*data_)[(index + 1) * 4 + 1] = 0;
+        (*data_)[(index + 1) * 4 + 2] = 0;
+        (*data_)[(index + 1) * 4 + 3] = 0;
+
         return;
     }
 
