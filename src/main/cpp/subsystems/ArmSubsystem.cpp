@@ -47,10 +47,10 @@ ArmSubsystem::ArmSubsystem() noexcept
     suctionMotorsOne_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsOneCanID);
     suctionMotorsTwo_ = std::make_unique<ctre::phoenix::motorcontrol::can::WPI_TalonSRX>(nonDrive::kSuctionMotorsTwoCanID);
 
-    dump1_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 2);
-    dump2_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 3);
-    dump3_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 4);
-    dump4_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, 5);
+    dump1_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kDump1);
+    dump2_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kDump2);
+    dump3_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kDump3);
+    dump4_ = std::make_unique<frc::Solenoid>(frc::PneumaticsModuleType::REVPH, nonDrive::kDump4);
 
     dump1_->SetPulseDuration(2.5_s);
     dump2_->SetPulseDuration(2.5_s);

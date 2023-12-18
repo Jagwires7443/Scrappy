@@ -144,8 +144,8 @@ namespace pidf
 
 namespace nonDrive
 {
-    constexpr int kShoulderAlignmentOffset = -650 + 2048;
-    constexpr int kElbowAlignmentOffset = +1794 - 2048;
+    constexpr int kShoulderAlignmentOffset = 1398;
+    constexpr int kElbowAlignmentOffset = -254;
 
     constexpr int kShoulderMotorCanID = 9;
     constexpr int kElbowMotorCanID = 10;
@@ -159,6 +159,11 @@ namespace nonDrive
 
     constexpr int kGripPneuOpen = 0;
     constexpr int kGripPneuClose = 1;
+
+    constexpr int kDump1 = 2;
+    constexpr int kDump2 = 3;
+    constexpr int kDump3 = 4;
+    constexpr int kDump4 = 5;
 
     constexpr int kSuctionMotorsOneCanID = 1;
     constexpr int kSuctionMotorsTwoCanID = 2;
@@ -201,11 +206,11 @@ namespace arm
 
     constexpr double shoulderParkPower = 0.10;
     constexpr double shoulderSlowPower = 0.25;
-    constexpr double shoulderMaxPower = 0.35;
+    constexpr double shoulderMaxPower = 0.40;
 
     constexpr double elbowParkPower = 0.10;
     constexpr double elbowSlowPower = 0.25;
-    constexpr double elbowMaxPower = 0.35;
+    constexpr double elbowMaxPower = 0.40;
 
     // Excluded range of angle for shoulder, centered on -90.0_deg.
     constexpr units::angle::degree_t shoulderNegativeStopLimit = -58.0_deg;
@@ -222,4 +227,9 @@ namespace arm
     constexpr units::angle::degree_t elbowPositiveParkLimit = -25.0_deg;
     constexpr units::angle::degree_t elbowNegativeSlowLimit = +30.0_deg;
     constexpr units::angle::degree_t elbowPositiveSlowLimit = -30.0_deg;
+}
+
+namespace autonomous
+{
+    constexpr units::angle::degree_t balanced = 15.0_deg;
 }
