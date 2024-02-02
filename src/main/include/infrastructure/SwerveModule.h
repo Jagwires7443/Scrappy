@@ -11,6 +11,7 @@
 #include <frc/kinematics/SwerveModuleState.h>
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
+#include <frc/sysid/SysIdRoutineLog.h>
 #include <units/angle.h>
 #include <units/length.h>
 #include <units/velocity.h>
@@ -242,6 +243,8 @@ public:
 
     return std::make_tuple(m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
   }
+
+  void SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept;
 
   void TestInit() noexcept;
   void TestExit() noexcept;

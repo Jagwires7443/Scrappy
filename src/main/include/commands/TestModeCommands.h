@@ -256,3 +256,29 @@ private:
     unsigned m_angle{0};
     unsigned m_delay{0};
 };
+
+// Perform SysId characterization, logging response to voltage step being
+// applied to motors.  Do this sequentially over various subsystems/modalities.
+class SysIdCommand
+    : public frc2::CommandHelper<frc2::Command, SysIdCommand>
+{
+public:
+    explicit SysIdCommand(DriveSubsystem *subsystem) noexcept
+        : m_subsystem{subsystem} { SetName("SysId"); }
+
+    void Initialize() noexcept override;
+
+    void Execute() noexcept override;
+
+    void End(bool interrupted) noexcept override;
+
+    static frc2::CommandPtr SysIdCommandFactory(DriveSubsystem *subsystem) noexcept
+    {
+        return frc2::CommandPtr{std::make_unique<SysIdCommand>(subsystem)};
+    }
+
+private:
+    DriveSubsystem *m_subsystem{nullptr};
+
+    unsigned m_iteration{0};
+};

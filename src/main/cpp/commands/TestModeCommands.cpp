@@ -6,6 +6,8 @@
 
 #include <cmath>
 
+#include <frc2/command/sysid/SysIdRoutine.h>
+
 void ZeroCommand::Execute() noexcept { (void)m_subsystem->ZeroModules(); }
 
 void MaxVAndATurningCommand::Initialize() noexcept
@@ -272,6 +274,11 @@ void SpinCommand::Initialize() noexcept
     m_subsystem->ResetDrive();
 }
 
+void SpinCommand::End(bool interrupted) noexcept
+{
+    m_subsystem->ResetDrive();
+}
+
 void SpinCommand::Execute() noexcept
 {
     if (!m_subsystem->SetTurnInPlace())
@@ -305,7 +312,48 @@ void SpinCommand::Execute() noexcept
     }
 }
 
-void SpinCommand::End(bool interrupted) noexcept
+void SysIdCommand::Initialize() noexcept
+{
+    m_iteration = 0;
+
+    m_subsystem->ResetDrive();
+}
+
+void SysIdCommand::End(bool interrupted) noexcept
 {
     m_subsystem->ResetDrive();
+}
+
+void SysIdCommand::Execute() noexcept
+{
+    // Sequentially characterize drive base:
+    //   1) Drive forward/reverse with all swerve modules in the same direction
+    //   2) Spin clockwise/counterclockwise with all swerve modules on circumference
+    //   3) Spin all individual swerve modules
+
+    // Do this for X time -- Add time-based state machine to sequence through things...
+    (void)m_subsystem->ZeroModules();
+
+    auto drive = [this](units::voltage::volt_t voltage) -> void
+    {
+        m_subsystem->TestModeDriveVoltage(voltage.value()); // XXX fix units for arg
+    };
+
+    auto log = [this](frc::sysid::SysIdRoutineLog *logger) -> void
+    {
+        m_subsystem->SysIdLog(logger);
+    };
+
+    frc2::sysid::Config config(std::nullopt, std::nullopt, std::nullopt, std::nullopt);
+
+    // Do this for Y time (15s), create this via make_uniq<>?
+    frc2::sysid::Mechanism mechanism(drive, log, m_subsystem, "Drive");
+
+    frc2::sysid::SysIdRoutine sysIdRoutine(config, mechanism);
+
+    // Do quasistatic and dyamic, forward and reverse
+    if (++m_iteration >= 1000)
+    {
+        m_iteration = 0;
+    }
 }

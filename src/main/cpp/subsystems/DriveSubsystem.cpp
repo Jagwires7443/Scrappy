@@ -1137,6 +1137,14 @@ double DriveSubsystem::GetTurnRate() noexcept
   return rate;
 }
 
+void DriveSubsystem::SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept
+{
+  m_frontLeftSwerveModule->SysIdLog(logger);
+  m_frontRightSwerveModule->SysIdLog(logger);
+  m_rearLeftSwerveModule->SysIdLog(logger);
+  m_rearRightSwerveModule->SysIdLog(logger);
+}
+
 void DriveSubsystem::ThetaPID(double P, double I, double D, double F, double V, double A) noexcept
 {
   m_thetaF = F;

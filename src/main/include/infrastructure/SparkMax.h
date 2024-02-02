@@ -9,8 +9,9 @@ namespace SparkMaxFactory
     // Print out string to index mapping (for updating switch/cases).
     void ConfigIndex() noexcept;
 
-    // Create a SPARK MAX motor controller.
+    // Create a SPARK MAX/Flex motor controller.
     std::unique_ptr<SmartMotorBase> CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts = 0) noexcept;
+    std::unique_ptr<SmartMotorBase> CreateSparkFlex(const std::string_view name, const int canId, const bool inverted, const int encoderCounts = 0) noexcept;
 }
 
 // Configuration:

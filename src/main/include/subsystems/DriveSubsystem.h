@@ -19,6 +19,7 @@
 #include <frc/shuffleboard/ComplexWidget.h>
 #include <frc/shuffleboard/SimpleWidget.h>
 #include <frc/smartdashboard/SendableChooser.h>
+#include <frc/sysid/SysIdRoutineLog.h>
 #include <frc2/command/CommandPtr.h>
 #include <frc2/command/SubsystemBase.h>
 #include <units/angle.h>
@@ -165,6 +166,8 @@ public:
     m_testModeTurningVoltage = 0.0;
     m_testModeDriveVoltage = voltage;
   }
+
+  void SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept;
 
   void ThetaPID(double P, double I, double D, double F, double V, double A) noexcept;
 

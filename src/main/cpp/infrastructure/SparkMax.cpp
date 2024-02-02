@@ -3,12 +3,16 @@
 #include <frc/DataLogManager.h>
 #include <frc/RobotController.h>
 #include <frc/shuffleboard/ShuffleboardWidget.h>
+#include <units/angular_velocity.h>
+#include <units/velocity.h>
 #include <wpi/DataLog.h>
 
+#include <rev/CANSparkFlex.h>
 #include <rev/CANSparkMax.h>
 #include <rev/CANSparkMaxLowLevel.h>
 #include <rev/RelativeEncoder.h>
 #include <rev/REVLibError.h>
+#include <rev/SparkFlexExternalEncoder.h>
 #include <rev/SparkLimitSwitch.h>
 #include <rev/SparkPIDController.h>
 
@@ -51,10 +55,12 @@ namespace
     class SparkMax : public SmartMotorBase
     {
     public:
-        SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept;
+        SparkMax(const std::string_view name, const bool flex_not_max, const int canId, const bool inverted, const int encoderCounts) noexcept;
 
         SparkMax(const SparkMax &) = delete;
         SparkMax &operator=(const SparkMax &) = delete;
+
+        const std::string &GetName() const noexcept override;
 
         void SetConfig(const ConfigMap config) noexcept override;
 
@@ -97,6 +103,10 @@ namespace
 
         void SetCurrent(const units::ampere_t current) noexcept override;
 
+        units::volt_t GetVoltage() noexcept override;
+
+        units::ampere_t GetCurrent() noexcept override;
+
         void SpecifyPosition(const double position) noexcept override;
 
         void SeekPosition(const double position) noexcept override;
@@ -122,6 +132,7 @@ namespace
 
         // Parameters supplied though ctor.
         const std::string name_;
+        const bool flex_not_max_;
         const int canId_;
         const bool inverted_;
         const int encoderCounts_;
@@ -129,10 +140,21 @@ namespace
         // Used for printf-style logging.
         wpi::log::StringLogEntry m_stringLog;
 
-        // Underlying REV object holders.
-        std::unique_ptr<rev::CANSparkMax> motor_;
-        std::unique_ptr<rev::RelativeEncoder> encoder_;
+        // Underlying REV object holders.  For `motor_` and `encoder_`, the
+        // introduction of the SparkFlex complicated things just a bit.  To
+        // deal with this, the owning pointer is of the most specific type,
+        // and a pointer to a base class that can do almost anything the same
+        // for either motor controller is used wherever possible.  This keeps
+        // the code nearly identical for either (which is most likely how
+        // things are in the REV code also).
+        std::unique_ptr<rev::CANSparkFlex> flex_motor_;
+        std::unique_ptr<rev::CANSparkMax> max_motor_;
+        std::unique_ptr<rev::SparkFlexExternalEncoder> flex_encoder_;
+        std::unique_ptr<rev::SparkMaxAlternateEncoder> max_encoder_;
+        std::unique_ptr<rev::RelativeEncoder> builtin_encoder_;
         std::unique_ptr<rev::SparkPIDController> controller_;
+        rev::CANSparkBase *motor_;
+        rev::RelativeEncoder *encoder_;
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
@@ -319,10 +341,15 @@ void SparkMaxFactory::ConfigIndex() noexcept
 
 std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
 {
-    return std::make_unique<SparkMax>(name, canId, inverted, encoderCounts);
+    return std::make_unique<SparkMax>(name, false, canId, inverted, encoderCounts);
 }
 
-SparkMax::SparkMax(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
+std::unique_ptr<SmartMotorBase> SparkMaxFactory::CreateSparkFlex(const std::string_view name, const int canId, const bool inverted, const int encoderCounts) noexcept
+{
+    return std::make_unique<SparkMax>(name, true, canId, inverted, encoderCounts);
+}
+
+SparkMax::SparkMax(const std::string_view name, const bool flex_not_max, const int canId, const bool inverted, const int encoderCounts) noexcept : name_{name}, flex_not_max_{flex_not_max}, canId_{canId}, inverted_{inverted}, encoderCounts_{encoderCounts}
 {
     // Set up onboard printf-style logging.
     std::string logName{"/SparkMax/"};
@@ -333,6 +360,11 @@ SparkMax::SparkMax(const std::string_view name, const int canId, const bool inve
     m_stringLog = wpi::log::StringLogEntry(frc::DataLogManager::GetLog(), logName);
 
     SetConfig(ConfigMap());
+}
+
+const std::string &SparkMax::GetName() const noexcept
+{
+    return name_;
 }
 
 void SparkMax::SetConfig(const ConfigMap config) noexcept
@@ -691,15 +723,24 @@ void SparkMax::ConfigPeriodic() noexcept
     {
         DoSafely("motor_", [&]() -> void
                  {
-            motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
-            if (!motor_)
-            {
-                ++throws_;
-                throw std::runtime_error("motor_");
-            }
+                    if (flex_not_max_)
+                    {
+                        flex_motor_ = std::make_unique<rev::CANSparkFlex>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
+                        motor_ = dynamic_cast<rev::CANSparkBase *>(flex_motor_.get());
+                    }
+                    else
+                    {
+                        max_motor_ = std::make_unique<rev::CANSparkMax>(canId_, rev::CANSparkLowLevel::MotorType::kBrushless);
+                        motor_ = dynamic_cast<rev::CANSparkBase *>(max_motor_.get());
+                    }
+                    if (!motor_)
+                    {
+                        ++throws_;
+                        throw std::runtime_error("motor_");
+                    }
 
-            // Does not get sent to the motor controller, done locally?
-            motor_->SetInverted(inverted_); });
+                    // Does not get sent to the motor controller, done locally?
+                    motor_->SetInverted(inverted_); });
 
         return;
     }
@@ -718,6 +759,11 @@ void SparkMax::ConfigPeriodic() noexcept
                 } });
 
         configRest_ = false;
+        max_motor_ = nullptr;
+        flex_motor_ = nullptr;
+        max_encoder_ = nullptr;
+        flex_encoder_ = nullptr;
+        builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
         controller_ = nullptr;
@@ -736,11 +782,18 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-                encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
+                builtin_encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
+                encoder_ = builtin_encoder_.get();
+            }
+            else if (flex_not_max_)
+            {
+                flex_encoder_ = std::make_unique<rev::SparkFlexExternalEncoder>(flex_motor_->GetExternalEncoder(encoderCounts_));
+                encoder_ = dynamic_cast<rev::SparkRelativeEncoder *>(flex_encoder_.get());
             }
             else
             {
-                encoder_ = std::make_unique<rev::SparkMaxAlternateEncoder>(motor_->GetAlternateEncoder(encoderCounts_));
+                max_encoder_ = std::make_unique<rev::SparkMaxAlternateEncoder>(max_motor_->GetAlternateEncoder(encoderCounts_));
+                encoder_ = dynamic_cast<rev::SparkRelativeEncoder *>(max_encoder_.get());
             }
             if (!encoder_)
             {
@@ -1202,6 +1255,26 @@ void SparkMax::SetCurrent(const units::ampere_t current) noexcept
              { if (!controller_ || AnyError(controller_->SetReference(current.to<double>(), rev::CANSparkMax::ControlType::kCurrent, 0))) {} });
 }
 
+units::volt_t SparkMax::GetVoltage() noexcept
+{
+    double voltage = 0.0;
+
+    DoSafely("GetBusVoltage/GetAppliedOutput", [&]() -> void
+             { if (motor_) { voltage = motor_->GetBusVoltage() * motor_->GetAppliedOutput(); } });
+
+    return units::volt_t{voltage};
+}
+
+units::ampere_t SparkMax::GetCurrent() noexcept
+{
+    double current = 0.0;
+
+    DoSafely("GetOutputCurrent", [&]() -> void
+             { if (motor_) { current = motor_->GetOutputCurrent(); } });
+
+    return units::ampere_t{current};
+}
+
 // Note that any error is tracked, but is not propagated from this context.
 void SparkMax::SpecifyPosition(const double position) noexcept
 {
@@ -1342,6 +1415,11 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
     }
     catch (const std::exception &e)
     {
+        max_motor_ = nullptr;
+        flex_motor_ = nullptr;
+        max_encoder_ = nullptr;
+        flex_encoder_ = nullptr;
+        builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
         controller_ = nullptr;
@@ -1355,6 +1433,11 @@ void SparkMax::DoSafely(const char *const what, std::function<void()> work) noex
     }
     catch (...)
     {
+        max_motor_ = nullptr;
+        flex_motor_ = nullptr;
+        max_encoder_ = nullptr;
+        flex_encoder_ = nullptr;
+        builtin_encoder_ = nullptr;
         motor_ = nullptr;
         encoder_ = nullptr;
         controller_ = nullptr;
