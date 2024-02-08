@@ -456,24 +456,27 @@ void SwerveModule::ResetEncoders() noexcept
     ResetDrive();
 }
 
-void SwerveModule::SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept
+void SwerveModule::SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept
+{
+    logger->Motor(m_driveMotor->GetName())
+        .voltage(m_driveMotor->GetVoltage())
+        .current(m_driveMotor->GetCurrent())
+        .position(m_driveMotor->GetPosition())
+        .velocity(m_driveMotor->GetVelocity());
+}
+
+void SwerveModule::SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept
 {
     // Use the external/absolute position sensor for turning data.  Given a
-    // target velocity of zero, the velocity should be the negative of error.
+    // target velocity of zero, the velocity should be the same as the error.
     units::angle::turn_t turning_position = m_turningPosition;
-    units::angular_velocity::turns_per_second_t turning_velocity = -m_rioPIDController->GetVelocityError();
+    units::angular_velocity::turns_per_second_t turning_velocity = m_rioPIDController->GetVelocityError();
 
     logger->Motor(m_turningMotor->GetName())
         .voltage(m_turningMotor->GetVoltage())
         .current(m_turningMotor->GetCurrent())
         .position(turning_position)
         .velocity(turning_velocity);
-
-    logger->Motor(m_driveMotor->GetName())
-        .voltage(m_driveMotor->GetVoltage())
-        .current(m_driveMotor->GetCurrent())
-        .position(m_driveMotor->GetPosition())
-        .velocity(m_driveMotor->GetVelocity());
 }
 
 // This sets up the test mode shuffleboard tab; everything is specified

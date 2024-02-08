@@ -167,7 +167,8 @@ public:
     m_testModeDriveVoltage = voltage;
   }
 
-  void SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept;
 
   void ThetaPID(double P, double I, double D, double F, double V, double A) noexcept;
 

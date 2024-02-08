@@ -7,6 +7,7 @@
 #include <frc2/command/Command.h>
 #include <frc2/command/CommandHelper.h>
 #include <frc2/command/CommandPtr.h>
+#include <frc2/command/sysid/SysIdRoutine.h>
 
 #include "subsystems/DriveSubsystem.h"
 
@@ -272,6 +273,8 @@ public:
 
     void End(bool interrupted) noexcept override;
 
+    bool IsFinished() noexcept override;
+
     static frc2::CommandPtr SysIdCommandFactory(DriveSubsystem *subsystem) noexcept
     {
         return frc2::CommandPtr{std::make_unique<SysIdCommand>(subsystem)};
@@ -280,5 +283,11 @@ public:
 private:
     DriveSubsystem *m_subsystem{nullptr};
 
-    unsigned m_iteration{0};
+    unsigned m_routine{0};
+    unsigned m_mode{0};
+    unsigned m_stage{0};
+
+    std::unique_ptr<frc2::sysid::SysIdRoutine> m_driveSysId;
+    std::unique_ptr<frc2::sysid::SysIdRoutine> m_steerSysId;
+    std::unique_ptr<frc2::CommandPtr> m_commandPtr;
 };

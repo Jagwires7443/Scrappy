@@ -244,7 +244,8 @@ public:
     return std::make_tuple(m_processVariable, m_processError, m_processFirstDerivative, m_processSecondDerivitive);
   }
 
-  void SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept;
+  void SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept;
 
   void TestInit() noexcept;
   void TestExit() noexcept;

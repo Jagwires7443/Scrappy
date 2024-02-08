@@ -1137,12 +1137,20 @@ double DriveSubsystem::GetTurnRate() noexcept
   return rate;
 }
 
-void DriveSubsystem::SysIdLog(frc::sysid::SysIdRoutineLog *logger) noexcept
+void DriveSubsystem::SysIdLogDrive(frc::sysid::SysIdRoutineLog *logger) noexcept
 {
-  m_frontLeftSwerveModule->SysIdLog(logger);
-  m_frontRightSwerveModule->SysIdLog(logger);
-  m_rearLeftSwerveModule->SysIdLog(logger);
-  m_rearRightSwerveModule->SysIdLog(logger);
+  m_frontLeftSwerveModule->SysIdLogDrive(logger);
+  m_frontRightSwerveModule->SysIdLogDrive(logger);
+  m_rearLeftSwerveModule->SysIdLogDrive(logger);
+  m_rearRightSwerveModule->SysIdLogDrive(logger);
+}
+
+void DriveSubsystem::SysIdLogSteer(frc::sysid::SysIdRoutineLog *logger) noexcept
+{
+  m_frontLeftSwerveModule->SysIdLogSteer(logger);
+  m_frontRightSwerveModule->SysIdLogSteer(logger);
+  m_rearLeftSwerveModule->SysIdLogSteer(logger);
+  m_rearRightSwerveModule->SysIdLogSteer(logger);
 }
 
 void DriveSubsystem::ThetaPID(double P, double I, double D, double F, double V, double A) noexcept
