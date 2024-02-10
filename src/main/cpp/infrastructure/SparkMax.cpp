@@ -782,7 +782,7 @@ void SparkMax::ConfigPeriodic() noexcept
                  {
             if (encoderCounts_ == 0)
             {
-                builtin_encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder(rev::SparkRelativeEncoder::Type::kHallSensor));
+                builtin_encoder_ = std::make_unique<rev::SparkRelativeEncoder>(motor_->GetEncoder());
                 encoder_ = builtin_encoder_.get();
             }
             else if (flex_not_max_)
