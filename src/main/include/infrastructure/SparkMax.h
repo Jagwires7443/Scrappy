@@ -386,10 +386,10 @@ namespace SparkMaxFactory
     // In particular, std::map is sorted, so the order here is meaningless.
     // The way forward (better readability/maintainability) is a constexpr map.
     const SmartMotorBase::ConfigMap configDefaults = {
-        {"kStatus0", uint32_t{10}}, // ms
-        {"kStatus1", uint32_t{20}}, // ms
-        {"kStatus2", uint32_t{50}}, // ms
-        {"Firmware Version", uint32_t{0x01050002}},
+        {"kStatus0", uint32_t{10}},        // ms.
+        {"kStatus1", uint32_t{20}},        // ms.
+        {"kStatus2", uint32_t{50}},        // ms.
+        {"Firmware Version", uint32_t{0}}, // Differs between MAX and Flex.
         {"kIdleMode", uint32_t{1}},
         {"kLimitSwitchFwdPolarity", uint32_t{0}},
         {"kLimitSwitchRevPolarity", uint32_t{0}},

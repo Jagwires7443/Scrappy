@@ -52,6 +52,10 @@
 
 namespace
 {
+    // Keep these current with latest REV firmware release.
+    constexpr int max_firmware_version = 0x18000001;  // 24.0.1.
+    constexpr int flex_firmware_version = 0x18000005; // 24.0.5.
+
     class SparkMax : public SmartMotorBase
     {
     public:
@@ -373,7 +377,14 @@ void SparkMax::SetConfig(const ConfigMap config) noexcept
 
     // Ensure at least these two config parameters are managed.
     config_.clear();
-    config_["Firmware Version"] = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("Firmware Version"));
+    if (flex_not_max_)
+    {
+        config_["Firmware Version"] = uint32_t{flex_firmware_version};
+    }
+    else
+    {
+        config_["Firmware Version"] = uint32_t{max_firmware_version};
+    }
     config_["kIdleMode"] = std::get<uint32_t>(SparkMaxFactory::configDefaults.at("kIdleMode"));
 
     // The order matters here, hence the somewhat convoluted logic.

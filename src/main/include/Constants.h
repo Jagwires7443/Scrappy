@@ -93,11 +93,6 @@ namespace physical
     constexpr bool kTurningMotorInverted = true;
 }
 
-namespace firmware
-{
-    constexpr int kSparkMaxFirmwareVersion = 0x01060003; // Version 1.6.3.
-}
-
 namespace pidf
 {
     // SDS MK4i Steering ratio is 150/7:1; NEO Free Speed is 5676 RPM; 264.88
