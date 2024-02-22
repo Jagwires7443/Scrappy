@@ -370,8 +370,6 @@ void SysIdCommand::Execute() noexcept
     //   2) Two modes, each with two directions (m_mode counter);
     //   3) Prepare/Initialize/Execute/End (m_stage counter).
 
-    // XXX FIX STATE MACHINE!
-
     // Outer iteration provides these two elements; increment it when both of
     // the inner iterations complete.
     std::function<bool()> prepare{nullptr};

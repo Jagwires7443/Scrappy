@@ -71,7 +71,7 @@ SwerveModule::SwerveModule(
     m_turningMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Turning"), turningMotorCanID, m_turningMotorInverted);
     m_turningMotor = std::make_unique<SmartMotor<units::angle::degrees>>(*m_turningMotorBase);
 
-    m_driveMotorBase = SparkMaxFactory::CreateSparkMax(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
+    m_driveMotorBase = SparkMaxFactory::CreateSparkFlex(m_name + std::string(" Drive"), driveMotorCanID, m_driveMotorInverted);
     m_driveMotor = std::make_unique<SmartMotor<units::length::meters>>(*m_driveMotorBase);
 
     // kStatus1 includes velocity; kStatus2 includes position -- these are made
