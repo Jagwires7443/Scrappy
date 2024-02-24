@@ -13,10 +13,10 @@ namespace physical
 {
     // Alignment constants, for each swerve module.  Specified on [-2048, 2048)
     // "count" scale, in (dimensionless) angular units.
-    constexpr int kFrontLeftAlignmentOffset = -1921;
-    constexpr int kFrontRightAlignmentOffset = -1675;
-    constexpr int kRearLeftAlignmentOffset = +825;
-    constexpr int kRearRightAlignmentOffset = -626;
+    constexpr int kFrontLeftAlignmentOffset = +1427;
+    constexpr int kFrontRightAlignmentOffset = -903;
+    constexpr int kRearLeftAlignmentOffset = +384;
+    constexpr int kRearRightAlignmentOffset = -205;
 
     // SDS MK4i Middle (L2) Gear Ratio: 6.75:1;
     // Nominal Wheel Diameter (4"): =0.1016m;
