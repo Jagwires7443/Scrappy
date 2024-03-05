@@ -157,8 +157,8 @@ namespace
         std::unique_ptr<rev::SparkMaxAlternateEncoder> max_encoder_;
         std::unique_ptr<rev::RelativeEncoder> builtin_encoder_;
         std::unique_ptr<rev::SparkPIDController> controller_;
-        rev::CANSparkBase *motor_;
-        rev::RelativeEncoder *encoder_;
+        rev::CANSparkBase *motor_{nullptr};
+        rev::RelativeEncoder *encoder_{nullptr};
 
         // REV object holders, only used when not using an external
         // ("alternate") encoder.
