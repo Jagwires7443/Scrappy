@@ -19,8 +19,8 @@ void Robot::RobotInit() noexcept
   frc::LiveWindow::SetEnabled(false);
   frc::LiveWindow::DisableAllTelemetry();
 
-  frc::DataLogManager::Start();
-  frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
+  // frc::DataLogManager::Start();
+  // frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
 }
 
 /**
