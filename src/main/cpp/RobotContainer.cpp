@@ -49,8 +49,8 @@ frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) 
         const auto controls = container->GetDriveTeleopControls();
 
         container->m_driveSubsystem.Drive(
-            std::get<0>(controls) * physical::kMaxDriveSpeed * 2.0,
-            std::get<1>(controls) * physical::kMaxDriveSpeed * 2.0,
+            std::get<0>(controls) * physical::kMaxDriveSpeed,
+            std::get<1>(controls) * physical::kMaxDriveSpeed,
             std::get<2>(controls) * physical::kMaxTurnRate,
             std::get<3>(controls));
       },
@@ -395,10 +395,10 @@ std::tuple<double, double, double, bool> RobotContainer::GetDriveTeleopControls(
     z *= 0.40;
   }
   else
-  { // XXX Still needed?
-    x *= 2.0;
-    y *= 2.0;
-    z *= 1.6;
+  {
+    // x *= 1.0;
+    // y *= 1.0;
+    z *= 0.8;
   }
 
   return std::make_tuple(x, y, z, m_fieldOriented);

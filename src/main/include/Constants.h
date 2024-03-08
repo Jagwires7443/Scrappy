@@ -32,7 +32,7 @@ namespace physical
     // This is an upper bound, for various reasons.  It needs to be empirically
     // measured.  Half of theoretical free speed is a reasonable starting value
     // (since something in the ballpark is needed here in order to to drive).
-    constexpr units::velocity::meters_per_second_t kMaxDriveSpeed = 14.5_fps / 1.25;
+    constexpr units::velocity::meters_per_second_t kMaxDriveSpeed = 22.5_fps / 1.25;
 
     // For a square drive base, with +/-11.875" x/y coordinates for each of
     // four swerve modules, the radius of the circle going through the turn
