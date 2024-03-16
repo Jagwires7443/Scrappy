@@ -54,7 +54,7 @@ namespace
 {
     // Keep these current with latest REV firmware release.
     constexpr int max_firmware_version = 0x18000001;  // 24.0.1.
-    constexpr int flex_firmware_version = 0x18000005; // 24.0.5.
+    constexpr int flex_firmware_version = 0x18000006; // 24.0.6.
 
     class SparkMax : public SmartMotorBase
     {
