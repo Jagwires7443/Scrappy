@@ -27,7 +27,6 @@ RobotContainer::RobotContainer() noexcept
   ConfigureBindings();
 
   printf("Axis: %i; Button: %i\n", m_buttonBoard.GetAxisCount(), m_buttonBoard.GetButtonCount());
-  m_buttonBoard.SetOutputs(0x0fff);
 }
 
 frc2::CommandPtr RobotContainer::DriveCommandFactory(RobotContainer *container) noexcept
@@ -121,6 +120,27 @@ void RobotContainer::TeleopInit() noexcept
                                                                { m_infrastructureSubsystem.SetLEDPattern(m_LEDPattern); },
                                                                {&m_infrastructureSubsystem}));
   m_infrastructureSubsystem.SetNumberLights(true);
+}
+
+void RobotContainer::RobotPeriodic() noexcept
+{
+  m_buttonBoard.SetOutputs(m_buttonLights.to_ulong());
+}
+
+void RobotContainer::LightButton(unsigned button) noexcept
+{
+  if (button < m_buttonLights.size())
+  {
+    m_buttonLights.set(button);
+  }
+}
+
+void RobotContainer::ClearButton(unsigned button) noexcept
+{
+  if (button < m_buttonLights.size())
+  {
+    m_buttonLights.reset(button);
+  }
 }
 
 void RobotContainer::ConfigureBindings() noexcept

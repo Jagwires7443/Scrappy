@@ -12,6 +12,7 @@
 #include "subsystems/DriveSubsystem.h"
 #include "subsystems/InfrastructureSubsystem.h"
 
+#include <bitset>
 #include <memory>
 #include <tuple>
 
@@ -31,6 +32,10 @@ public:
   RobotContainer &operator=(const RobotContainer &) = delete;
 
   std::optional<frc2::CommandPtr> GetAutonomousCommand() noexcept;
+
+  void RobotPeriodic() noexcept;
+  void LightButton(unsigned button) noexcept;
+  void ClearButton(unsigned button) noexcept;
 
   void TestInit() noexcept;
   void TestExit() noexcept;
@@ -56,6 +61,7 @@ private:
   double m_shooterVelocity{0.0};
   uint32_t m_LEDPattern{29};
   uint32_t m_LEDPatternCount{0};
+  std::bitset<12> m_buttonLights{0};
 
   // The robot's subsystems and commands are defined here...
   ArmSubsystem arm_;
