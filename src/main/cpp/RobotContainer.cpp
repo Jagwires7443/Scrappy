@@ -124,7 +124,29 @@ void RobotContainer::TeleopInit() noexcept
 
 void RobotContainer::RobotPeriodic() noexcept
 {
+  unsigned selector =
+      (m_buttonBoard.GetRawButton(4) ? 1 : 0) +
+      (m_buttonBoard.GetRawButton(3) ? 2 : 0) +
+      (m_buttonBoard.GetRawButton(6) ? 4 : 0) +
+      (m_buttonBoard.GetRawButton(5) ? 8 : 0);
+
   m_buttonBoard.SetOutputs(m_buttonLights.to_ulong());
+
+  if (m_selector == selector)
+  {
+    return;
+  }
+
+  printf("Selector: %u\n", selector);
+
+  m_selector = selector;
+
+  ClearAllButtons();
+
+  if (selector < m_buttonLights.size())
+  {
+    LightButton(selector);
+  }
 }
 
 void RobotContainer::LightButton(unsigned button) noexcept
@@ -141,6 +163,11 @@ void RobotContainer::ClearButton(unsigned button) noexcept
   {
     m_buttonLights.reset(button);
   }
+}
+
+void RobotContainer::ClearAllButtons() noexcept
+{
+  m_buttonLights.reset();
 }
 
 void RobotContainer::ConfigureBindings() noexcept

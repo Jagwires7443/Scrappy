@@ -36,6 +36,8 @@ void Robot::RobotInit() noexcept
 // latter case, TestPeriodic() handles manually driven act.
 void Robot::RobotPeriodic() noexcept
 {
+  m_container.RobotPeriodic();
+
   frc2::CommandScheduler::GetInstance().Run();
 }
 
