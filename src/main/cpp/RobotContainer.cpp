@@ -12,6 +12,7 @@
 #include <frc2/command/CommandScheduler.h>
 #include <frc2/command/InstantCommand.h>
 #include <frc2/command/RunCommand.h>
+#include <frc/RobotController.h>
 
 #include <cmath>
 #include <cstdio>
@@ -124,6 +125,17 @@ void RobotContainer::TeleopInit() noexcept
 
 void RobotContainer::RobotPeriodic() noexcept
 {
+  bool robotSignalLight = frc::RobotController::GetRSLState();
+
+  if (robotSignalLight)
+  {
+    LightButton(9);
+  }
+  else
+  {
+    ClearButton(9);
+  }
+
   unsigned selector =
       (m_buttonBoard.GetRawButton(4) ? 1 : 0) +
       (m_buttonBoard.GetRawButton(3) ? 2 : 0) +
