@@ -184,15 +184,6 @@ void RobotContainer::ClearAllButtons() noexcept
 
 void RobotContainer::ConfigureBindings() noexcept
 {
-  m_buttonBoard.Button(1).WhileFalse(frc2::InstantCommand([&]() -> void
-                                                          { printf("On\n"); m_buttonBoard.SetOutputs(0x0555); },
-                                                          {})
-                                         .ToPtr());
-  m_buttonBoard.Button(1).WhileTrue(frc2::InstantCommand([&]() -> void
-                                                         { printf("Off\n"); m_buttonBoard.SetOutputs(0x0aaa); },
-                                                         {})
-                                        .ToPtr());
-
 #if 0
   m_xbox.A().OnTrue(frc2::InstantCommand([&]() -> void
                                          { m_slow = true; },
